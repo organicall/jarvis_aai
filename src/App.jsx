@@ -17,31 +17,71 @@ const TAB_LABELS = {
   settings: 'Settings'
 };
 
+const FLOW_STAGES = [
+  { id: 'review', label: 'Annual Review Email' },
+  { id: 'updates', label: 'Client Updates' },
+  { id: 'meeting', label: 'Meeting' },
+  { id: 'notes', label: 'Post-Meeting Notes' },
+  { id: 'suitability', label: 'Suitability' },
+  { id: 'implement', label: 'Implement Advice' },
+  { id: 'close', label: 'Close Task' }
+];
+
+const ACTIVE_FLOW_BY_TAB = {
+  dashboard: 'review',
+  clients: 'updates',
+  'meeting-prep': 'meeting',
+  investments: 'implement',
+  protection: 'implement',
+  compliance: 'suitability',
+  settings: 'close'
+};
+
 const App = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const title = TAB_LABELS[activeTab] || 'Jarvis';
+  const activeFlow = ACTIVE_FLOW_BY_TAB[activeTab] || 'review';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="app-shell">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 ml-64 min-h-screen">
-        <div className="sticky top-0 z-40 backdrop-blur-xl bg-slate-950/70 border-b border-slate-800">
-          <div className="px-8 py-6 flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Jarvis Advisory Suite</p>
-              <h1 className="text-2xl font-semibold text-white">{title}</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="px-4 py-2 text-xs uppercase tracking-widest rounded-full border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 transition">
-                New Note
-              </button>
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 via-indigo-500 to-emerald-400 shadow-lg shadow-blue-500/30"></div>
-            </div>
+      <main className="main-area">
+        <header className="topbar">
+          <div className="topbar-title">
+            <p className="eyebrow">Jarvis Advisory Suite</p>
+            <h1>{title}</h1>
           </div>
-        </div>
+          <div className="topbar-actions">
+            <div className="search">
+              <input type="text" placeholder="Search client, note, task..." />
+              <span className="search-hint">⌘K</span>
+            </div>
+            <button className="action-btn">New Note</button>
+            <button className="action-btn primary">Start Review</button>
+            <div className="avatar-glow" />
+          </div>
+        </header>
 
-        <div className="px-8 py-8">
+        <section className="flow-strip">
+          <div className="flow-label">
+            <p>Client Journey</p>
+            <span>Annual review workflow</span>
+          </div>
+          <div className="flow-rail">
+            {FLOW_STAGES.map((stage) => (
+              <div
+                key={stage.id}
+                className={`flow-step ${activeFlow === stage.id ? 'active' : ''}`}
+              >
+                <div className="flow-dot" />
+                <span>{stage.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="content-area">
           {activeTab === 'dashboard' && <Dashboard />}
           {activeTab === 'clients' && <ClientList />}
           {activeTab === 'meeting-prep' && <MeetingPrep />}
@@ -50,10 +90,10 @@ const App = () => {
           {activeTab === 'compliance' && <Compliance />}
 
           {activeTab === 'settings' && (
-            <div className="glass-panel p-8 border border-slate-800/70">
-              <h2 className="text-lg font-semibold text-white mb-2">Settings</h2>
-              <p className="text-sm text-slate-400">
-                Settings will live here. For now, configure API keys in Meeting Prep and manage workflows in the sidebar.
+            <div className="panel">
+              <h2>Settings</h2>
+              <p>
+                Configure API keys in Meeting Prep. Workflow configuration and automation settings will live here.
               </p>
             </div>
           )}

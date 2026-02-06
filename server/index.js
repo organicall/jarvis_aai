@@ -2,6 +2,9 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { URL } from 'node:url';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const PORT = Number(process.env.PORT || 8787);
 

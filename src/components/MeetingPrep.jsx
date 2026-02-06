@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { clients } from '../data/clients';
-import { clientBriefs } from '../data/clientBriefs';
+import { fetchClients, fetchClientData, fetchLatestParsedDoc } from '../lib/db';
 import {
     Users,
     Target,
@@ -20,6 +19,7 @@ import {
 
 const MeetingPrep = () => {
     const [selectedClientId, setSelectedClientId] = useState('');
+    const [clients, setClients] = useState([]);
     const [meetingType, setMeetingType] = useState('Annual Review');
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedBrief, setGeneratedBrief] = useState(null);
@@ -28,7 +28,23 @@ const MeetingPrep = () => {
     const [groqApiKey, setGroqApiKey] = useState(localStorage.getItem('jarvis_groq_key') || '');
     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:8787';
 
-    const selectedClient = clients.find(c => c.id === selectedClientId);
+    useEffect(() => {
+        let ignore = false;
+        const loadClients = async () => {
+            try {
+                const data = await fetchClients();
+                if (!ignore) setClients(data);
+            } catch (err) {
+                console.warn('Failed to load clients', err.message);
+            }
+        };
+        loadClients();
+        return () => {
+            ignore = true;
+        };
+    }, []);
+
+    const selectedClient = clients.find(c => c.client_id === selectedClientId);
 
     const handleGenerate = async () => {
         if (!selectedClientId) return;
@@ -36,6 +52,15 @@ const MeetingPrep = () => {
         setIsGenerating(true);
         setGeneratedBrief(null);
         setError(null);
+
+        let clientSections = [];
+        try {
+            if (selectedClientId) {
+                clientSections = await fetchClientData(selectedClientId);
+            }
+        } catch (err) {
+            console.warn('Failed to fetch client data', err.message);
+        }
 
         try {
             const brief = await generateBriefWithAI(selectedClient);
@@ -47,7 +72,7 @@ const MeetingPrep = () => {
             setError(`AI Error: ${error.message}. Switching to Offline Mode.`);
 
             // FORCE FALLBACK
-            const mockData = getOfflineBrief(selectedClient);
+            const mockData = buildOfflineBrief(selectedClient, clientSections);
             console.log("Fallback Data Generated:", mockData);
 
             if (mockData) {
@@ -177,19 +202,35 @@ const MeetingPrep = () => {
         }
     };
 
-    // --- Mock Data Generator (Fallback / Demo) ---
-    const getOfflineBrief = (client) => {
+    const buildOfflineBrief = (client, sections = []) => {
         if (!client) return null;
-        console.log("Generating Offline Brief for:", client.name);
-        const brief = clientBriefs[client.id];
-        if (!brief) return null;
-
+        const sectionMap = sections.reduce((acc, item) => {
+            acc[item.section_type] = item.data;
+            return acc;
+        }, {});
+        const financial = sectionMap.financial_summary || {};
+        const goals = sectionMap.goals || [];
+        const risks = sectionMap.risks || [];
+        const opportunities = sectionMap.opportunities || [];
         return {
-            ...brief,
-            meetingDetails: {
-                ...brief.meetingDetails,
-                type: meetingType
-            }
+            meetingDetails: { date: client.next_review_date || 'Upcoming', location: 'Office', type: meetingType },
+            summary: sectionMap.personal_details?.text || `${client.client_name} client profile loaded from database.`,
+            financialSnapshot: {
+                netWorth: client.net_worth ? `£${Number(client.net_worth).toLocaleString()}` : 'N/A',
+                income: client.combined_income ? `£${Number(client.combined_income).toLocaleString()}` : 'N/A',
+                assets: financial.text || 'N/A',
+                liabilities: 'N/A',
+                riskProfile: 'N/A'
+            },
+            goals: goals.map((g) => ({ text: g, why: 'Client goal' })),
+            criticalItems: risks.slice(0, 3).map((r) => ({ text: r, urgency: 'High', deadline: 'Review', reason: 'Risk noted' })),
+            opportunities: opportunities.map((o) => ({ heading: 'Opportunity', text: o })),
+            risks: risks.map((r) => ({ heading: 'Risk', text: r })),
+            talkingPoints: [
+                { topic: 'Opening', script: 'Let’s review your latest updates and priorities.' },
+                { topic: 'Priorities', script: 'We can focus on urgent items and agreed next steps.' }
+            ],
+            emailTemplate: 'Thank you for the meeting. I will follow up with the action points discussed.'
         };
     };
 
@@ -247,16 +288,16 @@ const MeetingPrep = () => {
                             {clients.map(c => (
                                 <button
                                     key={c.id}
-                                    onClick={() => setSelectedClientId(c.id)}
+                                    onClick={() => setSelectedClientId(c.client_id)}
                                     className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors ${selectedClientId === c.id
                                         ? 'bg-blue-600 text-white shadow-lg'
                                         : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                                         }`}
                                 >
                                     <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold">
-                                        {c.name.split(' ')[0][0]}{c.name.split(' ')[1]?.[0]}
+                                        {c.client_name.split(' ')[0][0]}{c.client_name.split(' ')[1]?.[0]}
                                     </div>
-                                    <span className="text-sm font-medium truncate">{c.name}</span>
+                                    <span className="text-sm font-medium truncate">{c.client_name}</span>
                                 </button>
                             ))}
                         </div>
@@ -349,7 +390,7 @@ const MeetingPrep = () => {
                             <div className="glass-panel p-6 border-l-4 border-l-blue-500">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h3 className="text-xl font-bold text-white mb-1">Meeting Brief: {selectedClient?.name}</h3>
+                                        <h3 className="text-xl font-bold text-white mb-1">Meeting Brief: {selectedClient?.client_name}</h3>
                                         <p className="text-sm text-slate-400 flex items-center gap-2">
                                             <Clock className="w-3 h-3" />
                                             {generatedBrief.meetingDetails.date} • {generatedBrief.meetingDetails.type}

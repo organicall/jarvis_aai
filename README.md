@@ -6,6 +6,13 @@
 2. Run backend + frontend together:
    - `npm run dev:all`
 
+## Supabase
+Set your Supabase env vars in `/Users/ritwikbhattacharyya/jarvis-redo/.env`:
+- `VITE_SUPABASE_URL=https://enkghnaixezzmqwtbyfn.supabase.co`
+- `VITE_SUPABASE_ANON_KEY=YOUR_ANON_KEY`
+
+Never put the `service_role` key in frontend code.
+
 ## Notes
 - The Groq proxy runs at `http://localhost:8787`.
 - The frontend uses the proxy by default. Override with `VITE_API_BASE` if needed.
