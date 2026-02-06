@@ -297,6 +297,7 @@ const ClientList = () => {
                     model: 'llama-3.3-70b-versatile',
                     temperature: 0.2,
                     max_tokens: 3500,
+                    response_format: { type: 'json_object' },
                     messages: [
                         { role: 'system', content: aiSchemaPrompt },
                         { role: 'user', content: rawText }

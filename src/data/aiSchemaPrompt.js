@@ -1,5 +1,5 @@
-export const aiSchemaPrompt = `You are parsing a UK financial advisor's client document.
-Extract ALL relevant information and return as JSON.
+export const aiSchemaPrompt = `You must respond with valid JSON only. You are parsing a UK financial advisor's client document.
+Extract ALL relevant information and return ONLY a JSON object matching the schema below.
 
 Return JSON with this shape:
 {
@@ -30,7 +30,8 @@ Return JSON with this shape:
 
 Rules:
 - Return ONLY valid JSON.
-- Convert currency to numbers (e.g., £2.85m → 2850000).
+- Convert currency to numbers WITHOUT commas or symbols (e.g., £2.85m → 2850000, NOT 2,850,000).
+- ALL numeric values must be plain integers or decimals with NO commas, spaces, or formatting.
 - Dates must be ISO (YYYY-MM-DD) if known.
 - If client_id missing, set null.
 - Use null for unknown numbers or dates.
