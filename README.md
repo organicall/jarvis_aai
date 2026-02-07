@@ -65,9 +65,8 @@ flowchart TB
 ### Productivity & Niche UX Enhancements
 
 - Global quick search shortcut: `Cmd + K` (macOS) / `Ctrl + K` (Windows/Linux)
-- Keyboard-first search navigation: `Arrow Up/Down`, `Enter` to select, `Esc` to close
 - Smart search dropdown with top client matches and instant jump to client detail
-- `New Note` quick action in the top bar to instantly open a new Google Doc for quick note-taking
+- `New Note` quick action in the top bar to instantly open a new Google Doc for quick note-taking.
 - Contextual meeting notes: schedule modal loads and updates each client’s existing review note
 - Add Client flow captures rich structured context (financial fields, urgency flags, section-based notes)
 - Meeting Prep quick prompts for finance chatbot to speed up advisor questioning
