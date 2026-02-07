@@ -7,6 +7,7 @@ import Protection from './components/Protection.jsx';
 import Compliance from './components/Compliance.jsx';
 import MeetingPrep from './components/MeetingPrep.jsx';
 import { fetchClients } from './lib/db.js';
+import { LayoutDashboard, Users, PieChart, ShieldAlert, FileText, Settings, Sparkles, BrainCircuit } from 'lucide-react';
 
 const TAB_LABELS = {
   dashboard: 'Command Center',
@@ -142,98 +143,142 @@ const App = () => {
   }, []);
 
   return (
-    <div className="app-shell">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-
-      <main className="main-area">
-        <header className="topbar">
-          <div className="topbar-title">
-            <p className="eyebrow">Jarvis Advisory Suite</p>
-            <h1>{title}</h1>
+    <div className="app-shell-horizontal">
+      {/* Top Navigation Bar */}
+      <header className="top-nav-bar">
+        {/* JARVIS Branding */}
+        <div className="nav-brand">
+          <div className="brand-mark">
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
-          <div className="topbar-actions">
-            <div className="search" style={{ position: 'relative' }}>
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search client, note, task..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onKeyDown={handleSearchKeyDown}
-                onFocus={() => searchQuery && setShowDropdown(true)}
-              />
-              <span className="search-hint">⌘K</span>
-
-              {/* Search Dropdown */}
-              {showDropdown && filteredClients.length > 0 && (
-                <div
-                  ref={dropdownRef}
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    left: 0,
-                    right: 0,
-                    backgroundColor: '#0f172a',
-                    border: '1px solid #334155',
-                    borderRadius: '8px',
-                    boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
-                    zIndex: 1000,
-                    maxHeight: '300px',
-                    overflowY: 'auto'
-                  }}
-                >
-                  {filteredClients.map((client, index) => (
-                    <div
-                      key={client.client_id}
-                      onClick={() => handleSelectClient(client)}
-                      style={{
-                        padding: '12px 16px',
-                        cursor: 'pointer',
-                        backgroundColor: index === selectedIndex ? '#1e3a5f' : 'transparent',
-                        borderBottom: index < filteredClients.length - 1 ? '1px solid #1e293b' : 'none',
-                        transition: 'background-color 0.15s ease'
-                      }}
-                      onMouseEnter={() => setSelectedIndex(index)}
-                    >
-                      <div style={{ color: '#fff', fontWeight: '500', marginBottom: '4px' }}>
-                        {client.client_name}
-                      </div>
-                      <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
-                        {client.client_id} • Portfolio: £{(client.net_worth / 1000000).toFixed(2)}M
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button
-              className="action-btn"
-              onClick={() => window.open('https://docs.google.com/document/create', '_blank')}
-              title="Create a new Google Doc"
-            >
-              New Note
-            </button>
-            <div className="avatar-glow" />
+          <div className="brand-text">
+            <h1>JARVIS</h1>
+            <p>Advisor OS</p>
           </div>
-        </header>
+        </div>
 
-        <section className="flow-strip">
-          <div className="flow-label">
-            <p>Client Journey</p>
-            <span>Annual review workflow</span>
-          </div>
-          <div className="flow-rail">
-            {FLOW_STAGES.map((stage) => (
+        {/* Main Navigation Tabs */}
+        <nav className="horizontal-nav">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
+          >
+            <LayoutDashboard className="nav-icon" />
+            <span>Dashboard</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('clients')}
+            className={`nav-tab ${activeTab === 'clients' ? 'active' : ''}`}
+          >
+            <Users className="nav-icon" />
+            <span>Clients</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('meeting-prep')}
+            className={`nav-tab ${activeTab === 'meeting-prep' ? 'active' : ''}`}
+          >
+            <BrainCircuit className="nav-icon" />
+            <span>Meeting Prep</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('investments')}
+            className={`nav-tab ${activeTab === 'investments' ? 'active' : ''}`}
+          >
+            <PieChart className="nav-icon" />
+            <span>Investments</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('protection')}
+            className={`nav-tab ${activeTab === 'protection' ? 'active' : ''}`}
+          >
+            <ShieldAlert className="nav-icon" />
+            <span>Protection</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('compliance')}
+            className={`nav-tab ${activeTab === 'compliance' ? 'active' : ''}`}
+          >
+            <FileText className="nav-icon" />
+            <span>Compliance</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`nav-tab ${activeTab === 'settings' ? 'active' : ''}`}
+          >
+            <Settings className="nav-icon" />
+            <span>Settings</span>
+          </button>
+        </nav>
+
+        {/* Right Side Actions */}
+        <div className="nav-actions">
+          <div className="search" style={{ position: 'relative' }}>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search client, note, task..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
+              onFocus={() => searchQuery && setShowDropdown(true)}
+            />
+            <span className="search-hint">⌘K</span>
+
+            {/* Search Dropdown */}
+            {showDropdown && filteredClients.length > 0 && (
               <div
-                key={stage.id}
-                className={`flow-step ${activeFlow === stage.id ? 'active' : ''}`}
+                ref={dropdownRef}
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+                  zIndex: 1000,
+                  maxHeight: '300px',
+                  overflowY: 'auto'
+                }}
               >
-                <div className="flow-dot" />
-                <span>{stage.label}</span>
+                {filteredClients.map((client, index) => (
+                  <div
+                    key={client.client_id}
+                    onClick={() => handleSelectClient(client)}
+                    style={{
+                      padding: '12px 16px',
+                      cursor: 'pointer',
+                      backgroundColor: index === selectedIndex ? '#1e3a5f' : 'transparent',
+                      borderBottom: index < filteredClients.length - 1 ? '1px solid #1e293b' : 'none',
+                      transition: 'background-color 0.15s ease'
+                    }}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                  >
+                    <div style={{ color: '#fff', fontWeight: '500', marginBottom: '4px' }}>
+                      {client.client_name}
+                    </div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                      {client.client_id} • Portfolio: £{(client.net_worth / 1000000).toFixed(2)}M
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        </section>
+          <button
+            className="action-btn"
+            onClick={() => window.open('https://docs.google.com/document/create', '_blank')}
+            title="Create a new Google Doc"
+          >
+            New Note
+          </button>
+          <div className="avatar-glow" />
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="main-content-horizontal">
 
         <div className="content-area">
           {activeTab === 'dashboard' && <Dashboard />}

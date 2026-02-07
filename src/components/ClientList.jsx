@@ -745,13 +745,169 @@ const ClientList = ({ selectedClientId }) => {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-slate-300">
-                                        {(clientSections[client.client_id] || []).map((section) => (
-                                            <div key={section.data_id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                                                <p className="text-xs text-slate-500 uppercase">{section.section_type.replace(/_/g, ' ')}</p>
-                                                <p className="text-xs text-slate-300 line-clamp-2">{textFromData(section.data)}</p>
+                                    <div className="space-y-3">
+                                        {/* Quick Stats Overview - Compact Single Row */}
+                                        <div className="flex gap-1.5">
+                                            <div className="flex-1 p-2 rounded-lg bg-gradient-to-br from-blue-900/40 to-blue-800/20 border border-blue-700/30">
+                                                <p className="text-[9px] text-blue-300 uppercase tracking-wide mb-0.5">Net Worth</p>
+                                                <p className="text-lg font-bold text-white leading-tight">£{(client.net_worth / 1000000).toFixed(2)}M</p>
+                                                <p className="text-[9px] text-blue-200/60 mt-0.5">Portfolio Value</p>
                                             </div>
-                                        ))}
+                                            <div className="flex-1 p-2 rounded-lg bg-gradient-to-br from-emerald-900/40 to-emerald-800/20 border border-emerald-700/30">
+                                                <p className="text-[9px] text-emerald-300 uppercase tracking-wide mb-0.5">Income</p>
+                                                <p className="text-lg font-bold text-white leading-tight">£{(client.combined_income / 1000).toFixed(0)}k</p>
+                                                <p className="text-[9px] text-emerald-200/60 mt-0.5">Annual Combined</p>
+                                            </div>
+                                            <div className="flex-1 p-2 rounded-lg bg-gradient-to-br from-purple-900/40 to-purple-800/20 border border-purple-700/30">
+                                                <p className="text-[9px] text-purple-300 uppercase tracking-wide mb-0.5">Next Review</p>
+                                                <p className="text-sm font-bold text-white leading-tight">{client.next_review_date || 'TBD'}</p>
+                                                <p className="text-[9px] text-purple-200/60 mt-0.5">Scheduled Date</p>
+                                            </div>
+                                            <div className="flex-1 p-2 rounded-lg bg-gradient-to-br from-orange-900/40 to-orange-800/20 border border-orange-700/30">
+                                                <p className="text-[9px] text-orange-300 uppercase tracking-wide mb-0.5">Status</p>
+                                                <p className="text-sm font-bold text-white capitalize leading-tight">{client.status}</p>
+                                                {client.has_urgent_items && <p className="text-[9px] text-orange-300 mt-0.5">⚠️ Urgent Items</p>}
+                                            </div>
+                                        </div>
+
+                                        {/* Visual Charts Section - Compact */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            {/* ISA Allowance Progress */}
+                                            <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
+                                                <p className="text-xs font-semibold text-white mb-1.5">ISA Allowance Utilization</p>
+                                                <div className="space-y-1">
+                                                    {(() => {
+                                                        const maxAllowance = 20000; // UK ISA limit
+                                                        const used = maxAllowance - (client.isa_allowance_remaining || 0);
+                                                        const percentage = (used / maxAllowance) * 100;
+                                                        return (
+                                                            <>
+                                                                <div className="flex justify-between text-[10px] text-slate-400 mb-0.5">
+                                                                    <span>Used: £{used.toLocaleString()}</span>
+                                                                    <span>Remaining: £{(client.isa_allowance_remaining || 0).toLocaleString()}</span>
+                                                                </div>
+                                                                <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-500"
+                                                                        style={{ width: `${percentage}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                                <p className="text-[10px] text-center text-slate-400 mt-1">{percentage.toFixed(0)}% Utilized</p>
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            </div>
+
+                                            {/* Protection Coverage Visual */}
+                                            <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
+                                                <p className="text-xs font-semibold text-white mb-1.5">Protection Coverage</p>
+                                                <div className="flex items-center justify-center h-16">
+                                                    {client.has_protection_gaps ? (
+                                                        <div className="text-center">
+                                                            <div className="w-12 h-12 mx-auto rounded-full bg-orange-500/20 border-2 border-orange-500 flex items-center justify-center mb-1">
+                                                                <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                                </svg>
+                                                            </div>
+                                                            <p className="text-[10px] text-orange-400 font-medium">Gaps Identified</p>
+                                                            <p className="text-[10px] text-slate-500">Review Required</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center">
+                                                            <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center mb-1">
+                                                                <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                                </svg>
+                                                            </div>
+                                                            <p className="text-[10px] text-emerald-400 font-medium">Well Protected</p>
+                                                            <p className="text-[10px] text-slate-500">No Gaps Found</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Portfolio Composition Donut Chart - Compact */}
+                                        <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
+                                            <p className="text-xs font-semibold text-white mb-2">Portfolio Composition</p>
+                                            <div className="flex items-center gap-3">
+                                                {/* Donut Chart */}
+                                                <div className="relative w-28 h-28 flex-shrink-0">
+                                                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120" width="112" height="112">
+                                                        {/* Background circle */}
+                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#1e293b" strokeWidth="20" />
+                                                        {/* Equity segment (40%) */}
+                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#3b82f6" strokeWidth="20"
+                                                            strokeDasharray={`${2 * Math.PI * 50 * 0.4} ${2 * Math.PI * 50}`}
+                                                            strokeDashoffset="0" />
+                                                        {/* Fixed Income (30%) */}
+                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" strokeWidth="20"
+                                                            strokeDasharray={`${2 * Math.PI * 50 * 0.3} ${2 * Math.PI * 50}`}
+                                                            strokeDashoffset={`-${2 * Math.PI * 50 * 0.4}`} />
+                                                        {/* Property (20%) */}
+                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#a855f7" strokeWidth="20"
+                                                            strokeDasharray={`${2 * Math.PI * 50 * 0.2} ${2 * Math.PI * 50}`}
+                                                            strokeDashoffset={`-${2 * Math.PI * 50 * 0.7}`} />
+                                                        {/* Cash (10%) */}
+                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" strokeWidth="20"
+                                                            strokeDasharray={`${2 * Math.PI * 50 * 0.1} ${2 * Math.PI * 50}`}
+                                                            strokeDashoffset={`-${2 * Math.PI * 50 * 0.9}`} />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <div className="text-center">
+                                                            <p className="text-base font-bold text-white leading-none">100%</p>
+                                                            <p className="text-[9px] text-slate-500 leading-tight">Allocated</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Legend - Compact */}
+                                                <div className="flex-1 grid grid-cols-2 gap-x-3 gap-y-1.5">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></div>
+                                                        <div>
+                                                            <p className="text-[10px] text-slate-300 leading-tight">Equities</p>
+                                                            <p className="text-xs font-semibold text-white leading-tight">40%</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></div>
+                                                        <div>
+                                                            <p className="text-[10px] text-slate-300 leading-tight">Fixed Income</p>
+                                                            <p className="text-xs font-semibold text-white leading-tight">30%</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0"></div>
+                                                        <div>
+                                                            <p className="text-[10px] text-slate-300 leading-tight">Property</p>
+                                                            <p className="text-xs font-semibold text-white leading-tight">20%</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0"></div>
+                                                        <div>
+                                                            <p className="text-[10px] text-slate-300 leading-tight">Cash</p>
+                                                            <p className="text-xs font-semibold text-white leading-tight">10%</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Client Sections Data */}
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wider text-slate-500 mb-3">Detailed Information</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-slate-300">
+                                                {(clientSections[client.client_id] || []).map((section) => (
+                                                    <div key={section.data_id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors">
+                                                        <p className="text-xs text-slate-500 uppercase mb-1">{section.section_type.replace(/_/g, ' ')}</p>
+                                                        <p className="text-xs text-slate-300 line-clamp-2">{textFromData(section.data)}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
