@@ -60,6 +60,18 @@ flowchart TB
 - Advanced client management with search and filtering capabilities
 - Critical action tracking for clients requiring immediate attention
 - Meeting scheduler with integrated note-taking
+- Finance-focused chatbot in Meeting Prep with client-context-aware suggestions
+
+### Productivity & Niche UX Enhancements
+
+- Global quick search shortcut: `Cmd + K` (macOS) / `Ctrl + K` (Windows/Linux)
+- Keyboard-first search navigation: `Arrow Up/Down`, `Enter` to select, `Esc` to close
+- Smart search dropdown with top client matches and instant jump to client detail
+- "New Note" quick action in the top bar to instantly create a fresh Google Doc
+- Contextual meeting notes: schedule modal loads and updates each client’s existing review note
+- Add Client flow captures rich structured context (financial fields, urgency flags, section-based notes)
+- Meeting Prep quick prompts for finance chatbot to speed up advisor questioning
+- AI settings panel for browser-session Groq key override (falls back to server key)
 
 ## Tech Stack
 
