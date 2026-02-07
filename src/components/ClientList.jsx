@@ -148,6 +148,20 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
     const [editForm, setEditForm] = useState(emptyNote);
     const [newNote, setNewNote] = useState(emptyNote);
     const [showNewNote, setShowNewNote] = useState(false);
+    const [showFilterMenu, setShowFilterMenu] = useState(false);
+    const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'active', 'inactive'
+    const [filterUrgency, setFilterUrgency] = useState('all'); // 'all', 'urgent'
+
+    // Close filter menu when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showFilterMenu && !event.target.closest('.filter-menu-container')) {
+                setShowFilterMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showFilterMenu]);
 
     // Trigger "Add Client" modal when prompted by parent (e.g. Dashboard)
     React.useEffect(() => {
@@ -193,11 +207,30 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
     }, []);
 
     const filteredClients = useMemo(() => {
-        return clients.filter((client) =>
-            (client.client_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (client.client_id || '').toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [clients, searchTerm]);
+        let filtered = clients;
+
+        // Apply search filter
+        if (searchTerm) {
+            const lower = searchTerm.toLowerCase();
+            filtered = filtered.filter((c) => {
+                const name = (c.client_name || '').toLowerCase();
+                const id = (c.client_id || '').toLowerCase();
+                return name.includes(lower) || id.includes(lower);
+            });
+        }
+
+        // Apply status filter
+        if (filterStatus !== 'all') {
+            filtered = filtered.filter((c) => c.status === filterStatus);
+        }
+
+        // Apply urgency filter
+        if (filterUrgency === 'urgent') {
+            filtered = filtered.filter((c) => c.has_urgent_items);
+        }
+
+        return filtered;
+    }, [clients, searchTerm, filterStatus, filterUrgency]);
 
     const loadDetails = async (clientId) => {
         setExpandedClientId((prev) => (prev === clientId ? null : clientId));
@@ -452,282 +485,354 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="flex justify-between items-center bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                <div className="flex items-center gap-4 flex-1">
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
-                        <input
-                            type="text"
-                            placeholder="Search clients by name or ID..."
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+        <div className="space-y-4 animate-fade-in px-6">
+            <div className="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                <div className="flex items-center gap-3 flex-1">
+                    <div className="relative flex-1 max-w-lg">
+                        <div className="flex items-center gap-2 rounded-full px-4 py-2.5" style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(148, 163, 184, 0.18)' }}>
+                            <Search className="text-slate-400 w-4 h-4 flex-shrink-0" strokeWidth={2.5} />
+                            <input
+                                type="text"
+                                placeholder="Search clients by name or ID..."
+                                className="flex-1 bg-transparent border-none text-sm text-slate-200 placeholder-slate-500 focus:outline-none"
+                                style={{ backgroundColor: 'transparent' }}
+                                autoComplete="off"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 text-sm transition-colors">
-                        <Filter className="w-4 h-4" />
-                        <span>Filter</span>
-                    </button>
+                    <div className="relative filter-menu-container">
+                        <button
+                            onClick={() => setShowFilterMenu(!showFilterMenu)}
+                            className={`flex items-center gap-2 px-3 py-2.5 bg-slate-800 hover:bg-slate-700 border rounded-lg text-slate-300 text-sm transition-all ${showFilterMenu || filterStatus !== 'all' || filterUrgency !== 'all'
+                                ? 'border-blue-500 bg-slate-700'
+                                : 'border-slate-700'
+                                }`}
+                        >
+                            <Filter className="w-4 h-4" />
+                            <span>Filter</span>
+                            {(filterStatus !== 'all' || filterUrgency !== 'all') && (
+                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            )}
+                        </button>
+                        {showFilterMenu && (
+                            <div className="absolute top-full mt-2 right-0 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl z-50 overflow-hidden animate-fade-in">
+                                <div className="p-3 border-b border-slate-800">
+                                    <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Filter Clients</p>
+                                </div>
+                                <div className="p-3 space-y-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-2 font-medium">Status</label>
+                                        <div className="space-y-1.5">
+                                            {[{ value: 'all', label: 'All Clients' }, { value: 'active', label: 'Active Only' }, { value: 'inactive', label: 'Inactive Only' }].map(option => (
+                                                <button
+                                                    key={option.value}
+                                                    onClick={() => setFilterStatus(option.value)}
+                                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${filterStatus === option.value
+                                                        ? 'bg-blue-600 text-white font-medium'
+                                                        : 'bg-slate-800/50 text-slate-300 hover:bg-slate-800'
+                                                        }`}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-2 font-medium">Urgency</label>
+                                        <div className="space-y-1.5">
+                                            {[{ value: 'all', label: 'Show All' }, { value: 'urgent', label: 'Critical Action Only' }].map(option => (
+                                                <button
+                                                    key={option.value}
+                                                    onClick={() => setFilterUrgency(option.value)}
+                                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${filterUrgency === option.value
+                                                        ? 'bg-blue-600 text-white font-medium'
+                                                        : 'bg-slate-800/50 text-slate-300 hover:bg-slate-800'
+                                                        }`}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="pt-2 border-t border-slate-800">
+                                        <button
+                                            onClick={() => {
+                                                setFilterStatus('all');
+                                                setFilterUrgency('all');
+                                            }}
+                                            className="w-full px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                                        >
+                                            Clear All Filters
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-slate-400 text-sm">Showing {filteredClients.length} clients</span>
-                    <button className="ml-3 px-3 py-2 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white" onClick={() => setShowNewNote(true)}>Add Client</button>
+                    <button className="px-4 py-2.5 text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors" onClick={() => setShowNewNote(true)}>Add Client</button>
                 </div>
             </div>
 
-            {statusMessage && (
-                <div className={`p-3 rounded-lg text-sm border ${statusMessage.type === 'success'
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                    : statusMessage.type === 'loading'
-                        ? 'bg-slate-800/60 border-slate-700 text-slate-300'
-                        : 'bg-red-500/10 border-red-500/30 text-red-300'
-                    }`}
-                >
-                    {statusMessage.message}
-                </div>
-            )}
-
-            {showNewNote && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-md pt-2 pb-4 px-4">
-                    <div
-                        className="bg-slate-950 border-2 border-slate-700 rounded-xl shadow-2xl overflow-y-auto overflow-x-hidden"
-                        style={{ width: '80vw', height: '65vh', maxHeight: 'calc(100vh - 340px)' }}
+            {
+                statusMessage && (
+                    <div className={`p-3 rounded-lg text-sm border ${statusMessage.type === 'success'
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                        : statusMessage.type === 'loading'
+                            ? 'bg-slate-800/60 border-slate-700 text-slate-300'
+                            : 'bg-red-500/10 border-red-500/30 text-red-300'
+                        }`}
                     >
-                        {/* Header - Sticky */}
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-4 sticky top-0 bg-slate-950 z-10 p-8">
-                            <div>
-                                <h2 className="text-xl font-bold text-white">Add New Client</h2>
-                                <p className="text-sm text-slate-400 mt-1">Fill in client details or upload a DOCX document for AI parsing</p>
-                            </div>
-                            <button
-                                className="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-slate-600 transition-all"
-                                onClick={() => {
-                                    setShowNewNote(false);
-                                    setDocxPreview(null);
-                                    setDocxStatus(null);
-                                }}
-                                aria-label="Close"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
+                        {statusMessage.message}
+                    </div>
+                )
+            }
 
-                        {/* Scrollable Content */}
-                        <div className="p-8 space-y-6">
-
-                            {/* AI Upload Section - Prominent */}
-                            <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                            <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                            </svg>
-                                            AI Document Parser
-                                        </h3>
-                                        <p className="text-sm text-slate-400 mt-1">Upload a .docx file and let AI extract all client data automatically</p>
-                                    </div>
-                                    <label className="px-6 py-3 rounded-lg bg-white text-black font-semibold hover:bg-slate-200 transition-colors cursor-pointer flex items-center gap-2">
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                        </svg>
-                                        Upload DOCX
-                                        <input type="file" accept=".docx" className="hidden" onChange={handleDocxUpload} />
-                                    </label>
+            {
+                showNewNote && (
+                    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-md pt-2 pb-4 px-4">
+                        <div
+                            className="bg-slate-950 border-2 border-slate-700 rounded-xl shadow-2xl overflow-y-auto overflow-x-hidden"
+                            style={{ width: '80vw', height: '65vh', maxHeight: 'calc(100vh - 340px)' }}
+                        >
+                            {/* Header - Sticky */}
+                            <div className="flex items-center justify-between border-b border-slate-800 pb-4 sticky top-0 bg-slate-950 z-10 p-8">
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">Add New Client</h2>
+                                    <p className="text-sm text-slate-400 mt-1">Fill in client details or upload a DOCX document for AI parsing</p>
                                 </div>
-
-                                {docxStatus && (
-                                    <div className={`p-4 rounded-lg text-sm border ${docxStatus.type === 'success'
-                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                                        : docxStatus.type === 'loading'
-                                            ? 'bg-slate-800/60 border-slate-700 text-slate-300'
-                                            : 'bg-red-500/10 border-red-500/30 text-red-300'
-                                        }`}>
-                                        {docxStatus.message}
-                                    </div>
-                                )}
-
-                                {docxPreview && (
-                                    <div className="mt-4 bg-slate-950/60 border border-slate-700 rounded-lg p-4 space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm font-semibold text-white">
-                                                    {docxPreview.parsed?.client?.client_name || 'Unnamed Client'}
-                                                </p>
-                                                <p className="text-xs text-slate-400 mt-1">
-                                                    Goals: {docxPreview.parsed?.goals?.length || 0} •
-                                                    Opportunities: {docxPreview.parsed?.opportunities?.length || 0} •
-                                                    Risks: {docxPreview.parsed?.risks?.length || 0}
-                                                </p>
-                                            </div>
-                                            <button
-                                                className="px-4 py-2 rounded-lg bg-white text-black font-semibold hover:bg-slate-200 transition-colors"
-                                                onClick={insertParsedData}
-                                            >
-                                                Insert Parsed Data
-                                            </button>
-                                        </div>
-                                        <details className="text-xs">
-                                            <summary className="cursor-pointer text-slate-400 hover:text-slate-300">View parsed JSON</summary>
-                                            <pre className="mt-2 p-3 bg-black/50 rounded-lg overflow-auto max-h-48 text-slate-300 text-[11px]">
-                                                {JSON.stringify(docxPreview.parsed, null, 2)}
-                                            </pre>
-                                        </details>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Manual Entry Divider */}
-                            <div className="flex items-center gap-4">
-                                <div className="flex-1 h-px bg-slate-800"></div>
-                                <span className="text-xs uppercase tracking-wider text-slate-500">Or Enter Manually</span>
-                                <div className="flex-1 h-px bg-slate-800"></div>
-                            </div>
-
-                            {/* Basic Info */}
-                            <div>
-                                <h4 className="text-sm font-semibold text-white mb-3">Basic Information</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <input
-                                        className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
-                                        placeholder="Client ID (optional)"
-                                        value={newNote.client_id}
-                                        onChange={(e) => setNewNote({ ...newNote, client_id: e.target.value })}
-                                    />
-                                    <input
-                                        className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
-                                        placeholder="Client Name"
-                                        value={newNote.client_name}
-                                        onChange={(e) => setNewNote({ ...newNote, client_name: e.target.value })}
-                                    />
-                                    <input
-                                        className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
-                                        placeholder="Adviser Name"
-                                        value={newNote.adviser_name}
-                                        onChange={(e) => setNewNote({ ...newNote, adviser_name: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Financial Info */}
-                            <div>
-                                <h4 className="text-sm font-semibold text-white mb-3">Financial Details</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                                    <input
-                                        className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
-                                        placeholder="Combined Income"
-                                        value={newNote.combined_income}
-                                        onChange={(e) => setNewNote({ ...newNote, combined_income: e.target.value })}
-                                    />
-                                    <input
-                                        className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
-                                        placeholder="Net Worth"
-                                        value={newNote.net_worth}
-                                        onChange={(e) => setNewNote({ ...newNote, net_worth: e.target.value })}
-                                    />
-                                    <input
-                                        className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
-                                        placeholder="Next Review (YYYY-MM-DD)"
-                                        value={newNote.next_review_date}
-                                        onChange={(e) => setNewNote({ ...newNote, next_review_date: e.target.value })}
-                                    />
-                                    <input
-                                        className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
-                                        placeholder="ISA Allowance Remaining"
-                                        value={newNote.isa_allowance_remaining}
-                                        onChange={(e) => setNewNote({ ...newNote, isa_allowance_remaining: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Flags */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white">
-                                    <input
-                                        type="checkbox"
-                                        checked={newNote.has_protection_gaps}
-                                        onChange={(e) => setNewNote({ ...newNote, has_protection_gaps: e.target.checked })}
-                                        className="w-4 h-4"
-                                    />
-                                    Protection Gaps
-                                </label>
-                                <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white">
-                                    <input
-                                        type="checkbox"
-                                        checked={newNote.has_urgent_items}
-                                        onChange={(e) => setNewNote({ ...newNote, has_urgent_items: e.target.checked })}
-                                        className="w-4 h-4"
-                                    />
-                                    Urgent Items
-                                </label>
-                                <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white">
-                                    <input
-                                        type="checkbox"
-                                        checked={newNote.review_overdue}
-                                        onChange={(e) => setNewNote({ ...newNote, review_overdue: e.target.checked })}
-                                        className="w-4 h-4"
-                                    />
-                                    Review Overdue
-                                </label>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
                                 <button
-                                    className="px-6 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
+                                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-slate-600 transition-all"
                                     onClick={() => {
                                         setShowNewNote(false);
                                         setDocxPreview(null);
                                         setDocxStatus(null);
                                     }}
+                                    aria-label="Close"
                                 >
-                                    Cancel
+                                    <X className="w-5 h-5" />
                                 </button>
-                                <button
-                                    className="px-6 py-2 bg-white text-black font-semibold rounded-lg hover:bg-slate-200 transition-colors"
-                                    onClick={async () => {
-                                        await handleNewNoteSubmit();
-                                        setShowNewNote(false);
-                                    }}
-                                >
-                                    Save Client
-                                </button>
+                            </div>
+
+                            {/* Scrollable Content */}
+                            <div className="p-8 space-y-6">
+
+                                {/* AI Upload Section - Prominent */}
+                                <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                                <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                                AI Document Parser
+                                            </h3>
+                                            <p className="text-sm text-slate-400 mt-1">Upload a .docx file and let AI extract all client data automatically</p>
+                                        </div>
+                                        <label className="px-6 py-3 rounded-lg bg-white text-black font-semibold hover:bg-slate-200 transition-colors cursor-pointer flex items-center gap-2">
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                            Upload DOCX
+                                            <input type="file" accept=".docx" className="hidden" onChange={handleDocxUpload} />
+                                        </label>
+                                    </div>
+
+                                    {docxStatus && (
+                                        <div className={`p-4 rounded-lg text-sm border ${docxStatus.type === 'success'
+                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                            : docxStatus.type === 'loading'
+                                                ? 'bg-slate-800/60 border-slate-700 text-slate-300'
+                                                : 'bg-red-500/10 border-red-500/30 text-red-300'
+                                            }`}>
+                                            {docxStatus.message}
+                                        </div>
+                                    )}
+
+                                    {docxPreview && (
+                                        <div className="mt-4 bg-slate-950/60 border border-slate-700 rounded-lg p-4 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-sm font-semibold text-white">
+                                                        {docxPreview.parsed?.client?.client_name || 'Unnamed Client'}
+                                                    </p>
+                                                    <p className="text-xs text-slate-400 mt-1">
+                                                        Goals: {docxPreview.parsed?.goals?.length || 0} •
+                                                        Opportunities: {docxPreview.parsed?.opportunities?.length || 0} •
+                                                        Risks: {docxPreview.parsed?.risks?.length || 0}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    className="px-4 py-2 rounded-lg bg-white text-black font-semibold hover:bg-slate-200 transition-colors"
+                                                    onClick={insertParsedData}
+                                                >
+                                                    Insert Parsed Data
+                                                </button>
+                                            </div>
+                                            <details className="text-xs">
+                                                <summary className="cursor-pointer text-slate-400 hover:text-slate-300">View parsed JSON</summary>
+                                                <pre className="mt-2 p-3 bg-black/50 rounded-lg overflow-auto max-h-48 text-slate-300 text-[11px]">
+                                                    {JSON.stringify(docxPreview.parsed, null, 2)}
+                                                </pre>
+                                            </details>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Manual Entry Divider */}
+                                <div className="flex items-center gap-4">
+                                    <div className="flex-1 h-px bg-slate-800"></div>
+                                    <span className="text-xs uppercase tracking-wider text-slate-500">Or Enter Manually</span>
+                                    <div className="flex-1 h-px bg-slate-800"></div>
+                                </div>
+
+                                {/* Basic Info */}
+                                <div>
+                                    <h4 className="text-sm font-semibold text-white mb-3">Basic Information</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <input
+                                            className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
+                                            placeholder="Client ID (optional)"
+                                            value={newNote.client_id}
+                                            onChange={(e) => setNewNote({ ...newNote, client_id: e.target.value })}
+                                        />
+                                        <input
+                                            className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
+                                            placeholder="Client Name"
+                                            value={newNote.client_name}
+                                            onChange={(e) => setNewNote({ ...newNote, client_name: e.target.value })}
+                                        />
+                                        <input
+                                            className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
+                                            placeholder="Adviser Name"
+                                            value={newNote.adviser_name}
+                                            onChange={(e) => setNewNote({ ...newNote, adviser_name: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Financial Info */}
+                                <div>
+                                    <h4 className="text-sm font-semibold text-white mb-3">Financial Details</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                        <input
+                                            className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
+                                            placeholder="Combined Income"
+                                            value={newNote.combined_income}
+                                            onChange={(e) => setNewNote({ ...newNote, combined_income: e.target.value })}
+                                        />
+                                        <input
+                                            className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
+                                            placeholder="Net Worth"
+                                            value={newNote.net_worth}
+                                            onChange={(e) => setNewNote({ ...newNote, net_worth: e.target.value })}
+                                        />
+                                        <input
+                                            className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
+                                            placeholder="Next Review (YYYY-MM-DD)"
+                                            value={newNote.next_review_date}
+                                            onChange={(e) => setNewNote({ ...newNote, next_review_date: e.target.value })}
+                                        />
+                                        <input
+                                            className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
+                                            placeholder="ISA Allowance Remaining"
+                                            value={newNote.isa_allowance_remaining}
+                                            onChange={(e) => setNewNote({ ...newNote, isa_allowance_remaining: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Flags */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white">
+                                        <input
+                                            type="checkbox"
+                                            checked={newNote.has_protection_gaps}
+                                            onChange={(e) => setNewNote({ ...newNote, has_protection_gaps: e.target.checked })}
+                                            className="w-4 h-4"
+                                        />
+                                        Protection Gaps
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white">
+                                        <input
+                                            type="checkbox"
+                                            checked={newNote.has_urgent_items}
+                                            onChange={(e) => setNewNote({ ...newNote, has_urgent_items: e.target.checked })}
+                                            className="w-4 h-4"
+                                        />
+                                        Urgent Items
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white">
+                                        <input
+                                            type="checkbox"
+                                            checked={newNote.review_overdue}
+                                            onChange={(e) => setNewNote({ ...newNote, review_overdue: e.target.checked })}
+                                            className="w-4 h-4"
+                                        />
+                                        Review Overdue
+                                    </label>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                                    <button
+                                        className="px-6 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
+                                        onClick={() => {
+                                            setShowNewNote(false);
+                                            setDocxPreview(null);
+                                            setDocxStatus(null);
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        className="px-6 py-2 bg-white text-black font-semibold rounded-lg hover:bg-slate-200 transition-colors"
+                                        onClick={async () => {
+                                            await handleNewNoteSubmit();
+                                            setShowNewNote(false);
+                                        }}
+                                    >
+                                        Save Client
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3">
                 {filteredClients.map((client) => (
                     <div key={client.client_id} id={`client-${client.client_id}`} className="glass-card">
                         <div
-                            className="flex items-center gap-6 group hover:bg-slate-800/40 transition-all cursor-pointer p-4 rounded-xl"
+                            className="flex items-center gap-4 group hover:bg-slate-800/40 transition-all cursor-pointer p-3 rounded-xl"
                             onClick={() => loadDetails(client.client_id)}
                         >
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center border border-slate-600 group-hover:border-blue-500/50 transition-colors">
-                                <span className="font-bold text-slate-300 group-hover:text-blue-400">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center border border-slate-600 group-hover:border-blue-500/50 transition-colors flex-shrink-0">
+                                <span className="font-bold text-sm text-slate-300 group-hover:text-blue-400">
                                     {client.client_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                 </span>
                             </div>
 
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
                                 <div>
-                                    <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors">{client.client_name}</h3>
-                                    <p className="text-xs text-slate-500">{client.client_id} • {client.status}</p>
+                                    <h3 className="font-semibold text-base text-white group-hover:text-blue-400 transition-colors">{client.client_name}</h3>
+                                    <p className="text-xs text-slate-400">{client.client_id} • {client.status}</p>
                                 </div>
 
                                 <div className="hidden md:block">
-                                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Next Review</p>
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Next Review</p>
                                     <div className="flex items-center gap-2 text-sm text-slate-300">
-                                        <div className={`w-2 h-2 rounded-full ${client.next_review_date && new Date(client.next_review_date) < new Date('2026-04-01') ? 'bg-orange-500' : 'bg-emerald-500'}`}></div>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${client.next_review_date && new Date(client.next_review_date) < new Date('2026-04-01') ? 'bg-orange-500' : 'bg-emerald-500'}`}></div>
                                         {client.next_review_date || 'TBD'}
                                     </div>
                                 </div>
 
                                 <div className="hidden md:block">
-                                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Net Worth</p>
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Net Worth</p>
                                     <p className="text-sm font-mono text-slate-300">
                                         £{Number(client.net_worth || 0).toLocaleString()}
                                     </p>
@@ -735,7 +840,7 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
 
                                 <div className="md:col-span-1 flex justify-end">
                                     {client.has_urgent_items ? (
-                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-full mr-4">
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-full mr-2">
                                             Critical Action
                                         </span>
                                     ) : null}
@@ -743,9 +848,9 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
                             </div>
 
                             {expandedClientId === client.client_id ? (
-                                <ChevronUp className="w-4 h-4 text-slate-400" />
+                                <ChevronUp className="w-4 h-4 text-slate-400 flex-shrink-0" />
                             ) : (
-                                <ChevronDown className="w-4 h-4 text-slate-400" />
+                                <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
                             )}
                         </div>
 
@@ -1095,7 +1200,7 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
                     </div>
                 ))}
             </div>
-        </div>
+        </div >
     );
 };
 

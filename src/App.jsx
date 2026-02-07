@@ -164,7 +164,7 @@ const App = () => {
           </div>
           <div className="brand-text">
             <h1>JARVIS</h1>
-            <p>Advisor OS</p>
+            <p>Advisor AI</p>
           </div>
         </div>
 

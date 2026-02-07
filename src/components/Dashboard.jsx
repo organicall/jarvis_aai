@@ -144,7 +144,7 @@ const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
         setSelectedMeetingClient(client);
         if (client) {
             setMeetingDate(client.next_review_date || '');
-            setMeetingNote(''); // Reset note as we might not have it loaded
+            setMeetingNote(client.next_review_note || ''); // Load existing note
         } else {
             setMeetingDate('');
             setMeetingNote('');
@@ -157,9 +157,10 @@ const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
 
         try {
             setSavingMeeting(true);
-            const updates = { next_review_date: meetingDate };
-            // Note: Assuming database might not have a notes field yet, specifically for review.
-            // If it does, we would add it here: next_review_notes: meetingNote
+            const updates = {
+                next_review_date: meetingDate,
+                next_review_note: meetingNote  // Save the note
+            };
 
             await updateClient(selectedMeetingClient.client_id, updates);
             await loadData(); // Refresh data
@@ -174,19 +175,16 @@ const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
 
     const StatCard = ({ icon: Icon, label, value, subtext, color, onClick }) => (
         <div
-            className={`glass-card flex items-start justify-between relative overflow-hidden group ${onClick ? 'cursor-pointer' : ''}`}
+            className={`glass-card flex items-start justify-between group ${onClick ? 'cursor-pointer' : ''}`}
             onClick={onClick}
         >
-            <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity ${color}`}>
-                <Icon className="w-24 h-24" />
-            </div>
             <div>
                 <p className="text-slate-400 text-sm font-medium mb-1">{label}</p>
                 <h3 className="text-3xl font-bold text-white mb-2">{value}</h3>
                 {subtext && <p className="text-slate-500 text-xs">{subtext}</p>}
             </div>
-            <div className={`p-3 rounded-xl bg-opacity-20 ${color} bg-white backdrop-blur-sm`}>
-                <Icon className={`w-6 h-6 text-white`} />
+            <div className="flex items-center justify-center">
+                <Icon className="w-10 h-10 text-slate-500 group-hover:text-slate-400 transition-colors" strokeWidth={1.5} />
             </div>
         </div>
     );
@@ -379,13 +377,18 @@ const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
                                         className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 transition-colors group"
                                     >
                                         <div className="flex justify-between items-start mb-2">
-                                            <div>
+                                            <div className="flex-1">
                                                 <h4 className="text-sm font-semibold text-slate-200 group-hover:text-blue-400 transition-colors">
                                                     {client.client_name}
                                                 </h4>
                                                 <p className="text-[10px] text-slate-500 font-mono">
                                                     {client.next_review_date}
                                                 </p>
+                                                {client.next_review_note && (
+                                                    <p className="text-xs text-slate-400 mt-1 italic">
+                                                        {client.next_review_note}
+                                                    </p>
+                                                )}
                                             </div>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); openScheduleModal(client); }}

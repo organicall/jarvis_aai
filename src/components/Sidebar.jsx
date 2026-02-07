@@ -20,7 +20,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                 </div>
                 <div>
                     <h1>JARVIS</h1>
-                    <p>Advisor OS</p>
+                    <p>Advisor AI</p>
                 </div>
             </div>
 
