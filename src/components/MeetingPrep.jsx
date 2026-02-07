@@ -14,7 +14,8 @@ import {
     Zap,
     Settings,
     BrainCircuit,
-    Mic
+    Mic,
+    SendHorizontal
 } from 'lucide-react';
 
 const MeetingPrep = ({ initialClientId }) => {
@@ -30,6 +31,12 @@ const MeetingPrep = ({ initialClientId }) => {
     const [error, setError] = useState(null);
     const [apiSettingsOpen, setApiSettingsOpen] = useState(false);
     const [groqApiKey, setGroqApiKey] = useState(localStorage.getItem('jarvis_groq_key') || '');
+    const [clientSections, setClientSections] = useState([]);
+    const [latestParsedDoc, setLatestParsedDoc] = useState(null);
+    const [chatMessages, setChatMessages] = useState([]);
+    const [chatInput, setChatInput] = useState('');
+    const [isChatLoading, setIsChatLoading] = useState(false);
+    const [chatError, setChatError] = useState(null);
     const apiBase = import.meta.env.VITE_API_BASE || '';
 
     useEffect(() => {
@@ -50,6 +57,56 @@ const MeetingPrep = ({ initialClientId }) => {
 
     const selectedClient = clients.find(c => c.client_id === selectedClientId);
 
+    useEffect(() => {
+        let ignore = false;
+
+        const loadClientContext = async () => {
+            if (!selectedClientId) {
+                setClientSections([]);
+                setLatestParsedDoc(null);
+                return;
+            }
+
+            try {
+                const [sections, parsedDoc] = await Promise.all([
+                    fetchClientData(selectedClientId),
+                    fetchLatestParsedDoc(selectedClientId)
+                ]);
+                if (!ignore) {
+                    setClientSections(sections || []);
+                    setLatestParsedDoc(parsedDoc || null);
+                }
+            } catch (err) {
+                console.warn('Failed to load client context', err.message);
+                if (!ignore) {
+                    setClientSections([]);
+                    setLatestParsedDoc(null);
+                }
+            }
+        };
+
+        loadClientContext();
+        return () => {
+            ignore = true;
+        };
+    }, [selectedClientId]);
+
+    useEffect(() => {
+        if (!selectedClient) {
+            setChatMessages([]);
+            return;
+        }
+
+        setChatMessages([
+            {
+                role: 'assistant',
+                content: `I am ready to help with ${selectedClient.client_name}. Ask me anything about their financial plan, risks, opportunities, or meeting strategy.`
+            }
+        ]);
+        setChatError(null);
+        setChatInput('');
+    }, [selectedClientId, selectedClient]);
+
     const handleGenerate = async () => {
         if (!selectedClientId) return;
 
@@ -57,10 +114,11 @@ const MeetingPrep = ({ initialClientId }) => {
         setGeneratedBrief(null);
         setError(null);
 
-        let clientSections = [];
+        let fallbackSections = [];
         try {
             if (selectedClientId) {
-                clientSections = await fetchClientData(selectedClientId);
+                fallbackSections = await fetchClientData(selectedClientId);
+                setClientSections(fallbackSections);
             }
         } catch (err) {
             console.warn('Failed to fetch client data', err.message);
@@ -76,7 +134,7 @@ const MeetingPrep = ({ initialClientId }) => {
             setError(`AI Error: ${error.message}. Switching to Offline Mode.`);
 
             // FORCE FALLBACK
-            const mockData = buildOfflineBrief(selectedClient, clientSections);
+            const mockData = buildOfflineBrief(selectedClient, fallbackSections);
             console.log("Fallback Data Generated:", mockData);
 
             if (mockData) {
@@ -102,6 +160,59 @@ const MeetingPrep = ({ initialClientId }) => {
     const handleSaveKey = () => {
         localStorage.setItem('jarvis_groq_key', groqApiKey);
         setApiSettingsOpen(false);
+    };
+
+    const callGroqChat = async ({ messages, temperature = 0.3, maxTokens = 1600 }) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        const endpoints = [];
+        if (apiBase) endpoints.push(`${apiBase}/api/groq`);
+        endpoints.push('/api/groq');
+
+        let response = null;
+        let lastNetworkError = null;
+        for (const endpoint of endpoints) {
+            try {
+                response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(groqApiKey && groqApiKey.startsWith('gsk_') ? { 'x-groq-key': groqApiKey } : {})
+                    },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        messages,
+                        model: "llama-3.3-70b-versatile",
+                        temperature,
+                        max_tokens: maxTokens
+                    })
+                });
+
+                if (response) break;
+            } catch (error) {
+                lastNetworkError = error;
+                if (error.name === 'AbortError') {
+                    clearTimeout(timeoutId);
+                    throw new Error('Request timed out after 30 seconds');
+                }
+            }
+        }
+        clearTimeout(timeoutId);
+
+        if (!response) {
+            if (lastNetworkError?.message?.includes('Failed to fetch')) {
+                throw new Error('AI proxy is unreachable. Start the backend proxy (`npm run server`) or run both services with `npm run dev:all`.');
+            }
+            throw lastNetworkError || new Error('Failed to connect to AI backend');
+        }
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(`Groq API Error: ${response.status} - ${errData.error?.message || errData.error || 'Unknown Error'}`);
+        }
+
+        const data = await response.json();
+        return data?.choices?.[0]?.message?.content || '';
     };
 
     // --- Real AI Generator (Groq) ---
@@ -150,47 +261,14 @@ const MeetingPrep = ({ initialClientId }) => {
         `;
 
         console.log("Attempting Groq API Call via Proxy...");
-
-        // Add 30s timeout to prevent hanging
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-        let response;
-        try {
-            response = await fetch(`${apiBase}/api/groq`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(groqApiKey && groqApiKey.startsWith('gsk_') ? { 'x-groq-key': groqApiKey } : {})
-                },
-                signal: controller.signal,
-                body: JSON.stringify({
-                    messages: [
-                        { role: "system", content: systemPrompt },
-                        { role: "user", content: userPrompt }
-                    ],
-                    model: "llama-3.3-70b-versatile",
-                    temperature: 0.3,
-                    max_tokens: 4000
-                })
-            });
-            clearTimeout(timeoutId);
-        } catch (error) {
-            clearTimeout(timeoutId);
-            if (error.name === 'AbortError') {
-                throw new Error('Request timed out after 30 seconds');
-            }
-            throw error;
-        }
-
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            console.error("Groq API Error Details:", errData);
-            throw new Error(`Groq API Error: ${response.status} - ${errData.error?.message || errData.error || 'Unknown Error'}`);
-        }
-
-        const data = await response.json();
-        let content = data.choices[0].message.content;
+        let content = await callGroqChat({
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt }
+            ],
+            temperature: 0.3,
+            maxTokens: 4000
+        });
 
         // Clean potential markdown code blocks
         try {
@@ -203,6 +281,82 @@ const MeetingPrep = ({ initialClientId }) => {
         } catch (e) {
             console.error("JSON Parsing Error on content:", content);
             throw new Error("Failed to parse AI response as JSON");
+        }
+    };
+
+    const handleChatSend = async () => {
+        const prompt = chatInput.trim();
+        if (!prompt || !selectedClient || isChatLoading) return;
+
+        const userMessage = { role: 'user', content: prompt };
+        const nextMessages = [...chatMessages, userMessage];
+        setChatMessages(nextMessages);
+        setChatInput('');
+        setChatError(null);
+        setIsChatLoading(true);
+
+        const recentConversation = nextMessages.slice(-8).map((msg) => ({
+            role: msg.role,
+            content: msg.content
+        }));
+        const parsedDocSnippet = latestParsedDoc?.parsed_data
+            ? JSON.stringify(latestParsedDoc.parsed_data).slice(0, 4000)
+            : 'None';
+
+        const systemPrompt = `
+        You are Jarvis Finance Copilot for advisor meeting prep.
+        Priorities:
+        1. Use only provided client context. If missing data, state what is missing.
+        2. Be finance-first: tax efficiency, cashflow, risk, protection, goals, diversification, retirement readiness.
+        3. Give practical suggestions with reasons and expected impact.
+        4. Keep answers concise and advisor-ready.
+        5. End with 2-4 concrete next-step bullets when relevant.
+        `;
+
+        const userPrompt = `
+        CLIENT PROFILE:
+        ${JSON.stringify(selectedClient, null, 2)}
+
+        MEETING TYPE:
+        ${meetingType}
+
+        GENERATED BRIEF (if available):
+        ${generatedBrief ? JSON.stringify(generatedBrief, null, 2) : 'Not generated yet'}
+
+        CLIENT SECTIONS:
+        ${JSON.stringify(clientSections, null, 2)}
+
+        LATEST PARSED DOCUMENT SNIPPET:
+        ${parsedDocSnippet}
+
+        USER QUESTION:
+        ${prompt}
+        `;
+
+        try {
+            const assistantReply = await callGroqChat({
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    ...recentConversation,
+                    { role: 'user', content: userPrompt }
+                ],
+                temperature: 0.2,
+                maxTokens: 1200
+            });
+
+            setChatMessages((prev) => [
+                ...prev,
+                { role: 'assistant', content: assistantReply || 'I could not generate a useful response. Please try rephrasing your question.' }
+            ]);
+        } catch (err) {
+            console.error('Chat request failed', err);
+            setChatError(err.message || 'Failed to get response from Jarvis chat.');
+            setChatMessages((prev) => [
+                ...prev,
+                { role: 'assistant', content: 'I hit an error while processing that. Please try again.' }
+            ]);
+        } finally {
+            setIsChatLoading(false);
         }
     };
 
@@ -291,7 +445,7 @@ const MeetingPrep = ({ initialClientId }) => {
                         <div className="space-y-2">
                             {clients.map(c => (
                                 <button
-                                    key={c.id}
+                                    key={c.client_id || c.id || c.client_name}
                                     onClick={() => setSelectedClientId(c.client_id)}
                                     className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors ${selectedClientId === c.client_id
                                         ? 'bg-blue-600 text-white shadow-lg'
@@ -355,6 +509,67 @@ const MeetingPrep = ({ initialClientId }) => {
                                     Jarvis analyzes recent transactions, emails, and market changes to proactively suggest discussion points.
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Finance Chatbot */}
+                    <div className="glass-panel p-4 flex flex-col min-h-[360px] max-h-[460px]">
+                        <div className="flex items-center gap-2 mb-3">
+                            <MessageSquare className="w-4 h-4 text-emerald-400" />
+                            <h4 className="text-sm font-bold text-slate-200">Client Chat (Finance Copilot)</h4>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                            {!selectedClient && (
+                                <div className="text-xs text-slate-500 bg-slate-900/60 border border-slate-800 rounded-lg p-3">
+                                    Select a client to start chatting.
+                                </div>
+                            )}
+
+                            {selectedClient && chatMessages.map((msg, idx) => (
+                                <div
+                                    key={`${msg.role}-${idx}`}
+                                    className={`rounded-lg px-3 py-2 text-xs leading-relaxed border ${msg.role === 'user'
+                                        ? 'bg-blue-600/15 border-blue-500/30 text-blue-100 ml-8'
+                                        : 'bg-slate-900/70 border-slate-800 text-slate-200 mr-3'
+                                        }`}
+                                >
+                                    {msg.content}
+                                </div>
+                            ))}
+
+                            {isChatLoading && (
+                                <div className="rounded-lg px-3 py-2 text-xs border bg-slate-900/70 border-slate-800 text-slate-400 mr-3 animate-pulse">
+                                    Jarvis is thinking...
+                                </div>
+                            )}
+                        </div>
+
+                        {chatError && (
+                            <p className="text-[11px] text-red-300 mt-2">{chatError}</p>
+                        )}
+
+                        <div className="mt-3 flex gap-2">
+                            <input
+                                value={chatInput}
+                                onChange={(e) => setChatInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleChatSend();
+                                    }
+                                }}
+                                disabled={!selectedClient || isChatLoading}
+                                placeholder={selectedClient ? 'Ask about risks, investments, tax moves...' : 'Select a client first'}
+                                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:border-emerald-500 outline-none disabled:opacity-50"
+                            />
+                            <button
+                                onClick={handleChatSend}
+                                disabled={!selectedClient || !chatInput.trim() || isChatLoading}
+                                className="px-3 py-2 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <SendHorizontal className="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
                 </div>
