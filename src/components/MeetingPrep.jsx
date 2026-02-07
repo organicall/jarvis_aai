@@ -26,7 +26,7 @@ const MeetingPrep = () => {
     const [error, setError] = useState(null);
     const [apiSettingsOpen, setApiSettingsOpen] = useState(false);
     const [groqApiKey, setGroqApiKey] = useState(localStorage.getItem('jarvis_groq_key') || '');
-    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:8787';
+    const apiBase = import.meta.env.VITE_API_BASE || '';
 
     useEffect(() => {
         let ignore = false;

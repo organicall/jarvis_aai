@@ -151,7 +151,7 @@ const ClientList = ({ selectedClientId }) => {
     const [statusMessage, setStatusMessage] = useState(null);
     const [docxStatus, setDocxStatus] = useState(null);
     const [docxPreview, setDocxPreview] = useState(null);
-    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:8787';
+    const apiBase = import.meta.env.VITE_API_BASE || '';
     const groqApiKey = localStorage.getItem('jarvis_groq_key') || '';
 
     // Auto-expand and scroll to selected client from search
