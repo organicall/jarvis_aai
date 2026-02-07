@@ -17,8 +17,12 @@ import {
     Mic
 } from 'lucide-react';
 
-const MeetingPrep = () => {
-    const [selectedClientId, setSelectedClientId] = useState('');
+const MeetingPrep = ({ initialClientId }) => {
+    const [selectedClientId, setSelectedClientId] = useState(initialClientId || '');
+
+    useEffect(() => {
+        if (initialClientId) setSelectedClientId(initialClientId);
+    }, [initialClientId]);
     const [clients, setClients] = useState([]);
     const [meetingType, setMeetingType] = useState('Annual Review');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -289,7 +293,7 @@ const MeetingPrep = () => {
                                 <button
                                     key={c.id}
                                     onClick={() => setSelectedClientId(c.client_id)}
-                                    className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors ${selectedClientId === c.id
+                                    className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors ${selectedClientId === c.client_id
                                         ? 'bg-blue-600 text-white shadow-lg'
                                         : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                                         }`}

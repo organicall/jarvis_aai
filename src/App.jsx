@@ -46,6 +46,7 @@ const App = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [clients, setClients] = useState([]);
+  const [addClientTrigger, setAddClientTrigger] = useState(0);
 
   const searchInputRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -141,6 +142,16 @@ const App = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleAddClient = () => {
+    setActiveTab('clients');
+    setAddClientTrigger(Date.now());
+  };
+
+  const handleGenerateReport = (clientId) => {
+    setSelectedClientId(clientId);
+    setActiveTab('meeting-prep');
+  };
 
   return (
     <div className="app-shell-horizontal">
@@ -287,10 +298,12 @@ const App = () => {
                 setSelectedClientId(clientId);
                 setActiveTab('clients');
               }}
+              onAddClient={handleAddClient}
+              onGenerateReport={handleGenerateReport}
             />
           )}
-          {activeTab === 'clients' && <ClientList selectedClientId={selectedClientId} />}
-          {activeTab === 'meeting-prep' && <MeetingPrep />}
+          {activeTab === 'clients' && <ClientList selectedClientId={selectedClientId} addClientTrigger={addClientTrigger} />}
+          {activeTab === 'meeting-prep' && <MeetingPrep initialClientId={selectedClientId} />}
           {activeTab === 'investments' && <Investments />}
           {activeTab === 'protection' && <Protection />}
           {activeTab === 'compliance' && <Compliance />}

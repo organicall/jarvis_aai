@@ -136,7 +136,7 @@ const buildSectionPayload = (formData) => {
 
 
 
-const ClientList = ({ selectedClientId }) => {
+const ClientList = ({ selectedClientId, addClientTrigger }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -148,6 +148,13 @@ const ClientList = ({ selectedClientId }) => {
     const [editForm, setEditForm] = useState(emptyNote);
     const [newNote, setNewNote] = useState(emptyNote);
     const [showNewNote, setShowNewNote] = useState(false);
+
+    // Trigger "Add Client" modal when prompted by parent (e.g. Dashboard)
+    React.useEffect(() => {
+        if (addClientTrigger) {
+            setShowNewNote(true);
+        }
+    }, [addClientTrigger]);
     const [statusMessage, setStatusMessage] = useState(null);
     const [docxStatus, setDocxStatus] = useState(null);
     const [docxPreview, setDocxPreview] = useState(null);

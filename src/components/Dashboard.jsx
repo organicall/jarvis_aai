@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { fetchClients } from '../lib/db.js';
+import { createPortal } from 'react-dom';
+import { fetchClients, updateClient } from '../lib/db.js';
 import {
     AlertTriangle,
     TrendingUp,
@@ -7,10 +8,20 @@ import {
     DollarSign,
     Users,
     ArrowRight,
-    Shield
+    Shield,
+    Edit,
+    FileText,
+    Plus,
+    X,
+    Save
 } from 'lucide-react';
 
-const Dashboard = ({ onNavigateToClient }) => {
+const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
+    const [meetingModalOpen, setMeetingModalOpen] = useState(false);
+    const [selectedMeetingClient, setSelectedMeetingClient] = useState(null);
+    const [meetingDate, setMeetingDate] = useState('');
+    const [meetingNote, setMeetingNote] = useState('');
+    const [savingMeeting, setSavingMeeting] = useState(false);
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -128,6 +139,38 @@ const Dashboard = ({ onNavigateToClient }) => {
         const diffTime = taxYearEnd - today;
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }, []);
+
+    const openScheduleModal = (client = null) => {
+        setSelectedMeetingClient(client);
+        if (client) {
+            setMeetingDate(client.next_review_date || '');
+            setMeetingNote(''); // Reset note as we might not have it loaded
+        } else {
+            setMeetingDate('');
+            setMeetingNote('');
+        }
+        setMeetingModalOpen(true);
+    };
+
+    const handleSaveMeeting = async () => {
+        if (!selectedMeetingClient && !meetingDate) return;
+
+        try {
+            setSavingMeeting(true);
+            const updates = { next_review_date: meetingDate };
+            // Note: Assuming database might not have a notes field yet, specifically for review.
+            // If it does, we would add it here: next_review_notes: meetingNote
+
+            await updateClient(selectedMeetingClient.client_id, updates);
+            await loadData(); // Refresh data
+            setMeetingModalOpen(false);
+        } catch (err) {
+            console.error('Failed to update meeting:', err);
+            setError('Failed to save meeting details');
+        } finally {
+            setSavingMeeting(false);
+        }
+    };
 
     const StatCard = ({ icon: Icon, label, value, subtext, color, onClick }) => (
         <div
@@ -255,42 +298,6 @@ const Dashboard = ({ onNavigateToClient }) => {
                             </div>
                         )}
                     </div>
-
-                    {/* Upcoming Reviews */}
-                    <div className="glass-panel p-6">
-                        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                            <Calendar className="text-blue-400 w-5 h-5" />
-                            Upcoming Reviews
-                        </h3>
-
-                        {upcomingReviewClients.length === 0 ? (
-                            <div className="text-center py-8 text-slate-500">
-                                <p>No reviews scheduled in the next 30 days</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {upcomingReviewClients.map((client) => (
-                                    <div
-                                        key={client.client_id}
-                                        className="flex items-center justify-between p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 hover:bg-slate-800/50 transition-colors group cursor-pointer"
-                                    >
-                                        <div className="flex-1">
-                                            <h4 className="font-semibold text-slate-200 group-hover:text-blue-400 transition-colors mb-1">
-                                                {client.client_name}
-                                            </h4>
-                                            <p className="text-xs text-slate-500">
-                                                {client.client_id} • Net Worth: £{(client.net_worth / 1000000).toFixed(2)}M
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-mono text-slate-300">{client.next_review_date}</p>
-                                            <p className="text-xs text-slate-500 capitalize">{client.status}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
                 </div>
 
                 {/* Sidebar Widgets */}
@@ -299,7 +306,10 @@ const Dashboard = ({ onNavigateToClient }) => {
                     <div className="glass-panel p-6 bg-gradient-to-b from-blue-900/20 to-slate-900/50 border-blue-500/10">
                         <h4 className="text-sm font-bold text-blue-100 uppercase tracking-wider mb-4">Quick Actions</h4>
                         <div className="space-y-2">
-                            <button className="w-full bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2">
+                            <button
+                                onClick={onAddClient}
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                            >
                                 <span>Add New Client</span>
                             </button>
                             <button className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 p-3 rounded-lg text-sm font-medium transition-all border border-slate-700">
@@ -341,32 +351,162 @@ const Dashboard = ({ onNavigateToClient }) => {
                         </div>
                     </div>
 
-                    {/* Key Insights */}
+                    {/* Upcoming Reviews & Scheduling */}
                     <div className="glass-panel p-6">
-                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Key Insights</h3>
-                        <div className="space-y-3">
-                            <div className="p-3 bg-slate-800/50 rounded-lg border-l-2 border-blue-500">
-                                <div className="flex items-start gap-2">
-                                    <Shield className="w-4 h-4 text-blue-400 mt-0.5" />
-                                    <div>
-                                        <p className="text-xs font-semibold text-slate-300 mb-1">Protection Coverage</p>
-                                        <p className="text-xs text-slate-400">{protectionGaps} clients need protection review</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="p-3 bg-slate-800/50 rounded-lg border-l-2 border-emerald-500">
-                                <div className="flex items-start gap-2">
-                                    <TrendingUp className="w-4 h-4 text-emerald-400 mt-0.5" />
-                                    <div>
-                                        <p className="text-xs font-semibold text-slate-300 mb-1">ISA Opportunities</p>
-                                        <p className="text-xs text-slate-400">{isaStats.clientsWithGaps} clients can utilize remaining allowance</p>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <Calendar className="text-blue-400 w-4 h-4" />
+                                Upcoming Reviews
+                            </h3>
+                            <button
+                                onClick={() => openScheduleModal(null)}
+                                className="p-1 hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-white"
+                                title="Schedule New Meeting"
+                            >
+                                <Plus className="w-4 h-4" />
+                            </button>
                         </div>
+
+                        {upcomingReviewClients.length === 0 ? (
+                            <div className="text-center py-4 text-slate-500 text-xs">
+                                <p>No reviews scheduled</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {upcomingReviewClients.map((client) => (
+                                    <div
+                                        key={client.client_id}
+                                        className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 transition-colors group"
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-slate-200 group-hover:text-blue-400 transition-colors">
+                                                    {client.client_name}
+                                                </h4>
+                                                <p className="text-[10px] text-slate-500 font-mono">
+                                                    {client.next_review_date}
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); openScheduleModal(client); }}
+                                                className="text-slate-500 hover:text-blue-400 transition-colors p-1"
+                                                title="Edit Meeting"
+                                            >
+                                                <Edit className="w-3 h-3" />
+                                            </button>
+                                        </div>
+
+                                        <div className="flex gap-2 mt-2">
+                                            <button
+                                                onClick={() => onGenerateReport && onGenerateReport(client.client_id)}
+                                                className="flex-1 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 rounded transition-colors flex items-center justify-center gap-1 border border-slate-600"
+                                            >
+                                                <FileText className="w-3 h-3" />
+                                                Prep Report
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Schedule/Edit Modal */}
+            {meetingModalOpen && createPortal(
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4"
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+                >
+                    <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800/50">
+                            <h3 className="text-lg font-semibold text-white">
+                                {selectedMeetingClient ? 'Edit Meeting' : 'Schedule New Meeting'}
+                            </h3>
+                            <button
+                                onClick={() => setMeetingModalOpen(false)}
+                                className="text-slate-400 hover:text-white transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            {!selectedMeetingClient && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-1">Select Client</label>
+                                    <select
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        onChange={(e) => {
+                                            const client = clients.find(c => c.client_id === e.target.value);
+                                            setSelectedMeetingClient(client || null);
+                                        }}
+                                        defaultValue=""
+                                    >
+                                        <option value="" disabled>Choose a client...</option>
+                                        {clients.map(c => (
+                                            <option key={c.client_id} value={c.client_id}>{c.client_name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {selectedMeetingClient && (
+                                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-4">
+                                    <p className="text-sm text-blue-300 font-medium">{selectedMeetingClient.client_name}</p>
+                                    <p className="text-xs text-blue-400/70">{selectedMeetingClient.client_id}</p>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Meeting Date</label>
+                                <input
+                                    type="date"
+                                    value={meetingDate}
+                                    onChange={(e) => setMeetingDate(e.target.value)}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none hover:bg-slate-800/80 transition-colors"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Add Note (Optional)</label>
+                                <textarea
+                                    value={meetingNote}
+                                    onChange={(e) => setMeetingNote(e.target.value)}
+                                    rows={3}
+                                    placeholder="Agenda items, key updates..."
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-slate-700 bg-slate-800/30 flex justify-end gap-3">
+                            <button
+                                onClick={() => setMeetingModalOpen(false)}
+                                className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveMeeting}
+                                disabled={savingMeeting || !selectedMeetingClient || !meetingDate}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-900/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {savingMeeting ? (
+                                    <span>Saving...</span>
+                                ) : (
+                                    <>
+                                        <Save className="w-4 h-4" />
+                                        Save Meeting
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };

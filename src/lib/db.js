@@ -25,3 +25,13 @@ export async function fetchLatestParsedDoc(clientId) {
   if (error) throw error;
   return data?.[0] || null;
 }
+
+export async function updateClient(clientId, updates) {
+  const { data, error } = await supabase
+    .from('clients')
+    .update(updates)
+    .eq('client_id', clientId)
+    .select();
+  if (error) throw error;
+  return data;
+}
