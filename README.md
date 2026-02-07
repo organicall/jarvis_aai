@@ -14,42 +14,27 @@ JARVIS is an AI-powered platform built to streamline financial advisory workflow
 ## Solution Overview
 
 ```mermaid
-flowchart LR
-    A["Advisor Logs In"] --> B["Dashboard (Command Center)"]
-    B --> C["Clients Tab: Search + Select Client"]
-    C --> D["Meeting Prep: Select Meeting Type"]
+flowchart TB
+    A["Advisor Login"] --> B["Dashboard"]
+    B --> C["Client Search + Select"]
+    C --> D["Meeting Prep"]
     D --> E["Generate Brief"]
+    E --> F["Structured Brief Output"]
+    F --> G["Investments / Protection / Compliance Review"]
+    G --> H["Final Advice Recommendation"]
+    H --> I["Post-Meeting Actions<br/>Email, Tasks, CRM Update"]
+```
 
-    E --> F["Client Data (Supabase)"]
-    E --> G["Parsed Documents (Supabase)"]
-    F --> H["AI Proxy (Node /api/groq)"]
-    G --> H
-    H --> I["Groq LLM"]
-
-    I --> J["Structured Meeting Brief"]
-    J --> J1["Summary + Financial Snapshot"]
-    J --> J2["Goals + Critical Actions"]
-    J --> J3["Risks + Opportunities"]
-    J --> J4["Talking Points + Follow-up Email"]
-
-    C --> K["Finance Chatbot (Right Panel)"]
-    K --> H
-    H --> L["Context-Aware Advisor Suggestions"]
-    L --> M["Advisor Notes / Actions"]
-
-    J --> N["Investments Tab"]
-    J --> O["Protection Tab"]
-    J --> P["Compliance Tab"]
-
-    N --> Q["Portfolio Direction + Suitability Insights"]
-    O --> R["Protection Gap Analysis"]
-    P --> S["Audit-Ready Documentation"]
-
-    Q --> T["Final Advice Recommendation"]
-    R --> T
-    S --> T
-
-    T --> U["Post-Meeting Actions: Email, Tasks, CRM Update"]
+```mermaid
+flowchart TB
+    A["Selected Client Context"] --> B["Client Data (Supabase)"]
+    A --> C["Parsed Documents (Supabase)"]
+    B --> D["Node API Proxy (/api/groq)"]
+    C --> D
+    D --> E["Groq LLM"]
+    E --> F["Meeting Brief Sections<br/>Summary, Risks, Opportunities, Talking Points"]
+    E --> G["Finance Chatbot Responses<br/>Client-Aware Suggestions"]
+    G --> H["Advisor Notes + Actions"]
 ```
 
 ### Core Features
