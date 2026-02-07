@@ -67,11 +67,49 @@ flowchart TB
 - Global quick search shortcut: `Cmd + K` (macOS) / `Ctrl + K` (Windows/Linux)
 - Keyboard-first search navigation: `Arrow Up/Down`, `Enter` to select, `Esc` to close
 - Smart search dropdown with top client matches and instant jump to client detail
-- "New Note" quick action in the top bar to instantly create a fresh Google Doc
+- `New Note` quick action in the top bar to instantly open a new Google Doc for quick note-taking
 - Contextual meeting notes: schedule modal loads and updates each client’s existing review note
 - Add Client flow captures rich structured context (financial fields, urgency flags, section-based notes)
 - Meeting Prep quick prompts for finance chatbot to speed up advisor questioning
 - AI settings panel for browser-session Groq key override (falls back to server key)
+
+### Tab-by-Tab Features
+
+#### Dashboard
+- KPI overview cards for Total AUM, Total Clients, Critical Actions, and Upcoming Reviews
+- Priority Actions feed for urgent clients requiring immediate advisor attention
+- Upcoming review visibility and review planning support
+- Quick actions for common advisor workflows (e.g., add client, generate report, schedule/update meeting notes)
+
+#### Clients
+- Searchable and filterable client list (status and urgency filters)
+- Expandable client detail panels with structured section data
+- Add Client modal with financial fields, urgency flags, and section-based context capture
+- Edit-and-save workflow for client profile updates
+
+#### Meeting Prep
+- Client + meeting-type driven brief generation with AI
+- Structured brief output: summary, financial snapshot, goals, critical actions, opportunities, risks, talking points, and follow-up email draft
+- Finance-focused chatbot on the right panel with context-aware suggestions
+- Quick prompt chips to accelerate advisor Q&A during prep
+- AI settings support for optional browser-session API key override
+
+#### Investments
+- Investment analysis workspace to review portfolio direction and recommendation suitability
+- Portfolio-level perspective aligned to client objectives and risk posture
+
+#### Protection
+- Protection gap review with critical vs non-critical prioritization
+- Advisor-facing feed to surface immediate risk mitigation conversations
+
+#### Compliance
+- Compliance and audit workspace for recommendation traceability
+- Search/filter support for recommendation history and document checks
+- Suitability-oriented view to keep advice documentation review-ready
+
+#### Settings
+- Central placeholder for system-level configuration
+- Current guidance for API key/config handling with expansion path for automation/workflow settings
 
 ## Tech Stack
 
