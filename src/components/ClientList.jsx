@@ -109,7 +109,7 @@ const buildSectionPayload = (formData) => {
 
 
 
-const ClientList = () => {
+const ClientList = ({ selectedClientId }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -125,6 +125,20 @@ const ClientList = () => {
     const [docxPreview, setDocxPreview] = useState(null);
     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:8787';
     const groqApiKey = localStorage.getItem('jarvis_groq_key') || '';
+
+    // Auto-expand and scroll to selected client from search
+    React.useEffect(() => {
+        if (selectedClientId && clients.length > 0) {
+            setExpandedClientId(selectedClientId);
+            // Small delay to ensure DOM is updated
+            setTimeout(() => {
+                const element = document.getElementById(`client-${selectedClientId}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
+        }
+    }, [selectedClientId, clients]);
 
     React.useEffect(() => {
         let ignore = false;
@@ -652,7 +666,7 @@ const ClientList = () => {
 
             <div className="grid grid-cols-1 gap-4">
                 {filteredClients.map((client) => (
-                    <div key={client.client_id} className="glass-card">
+                    <div key={client.client_id} id={`client-${client.client_id}`} className="glass-card">
                         <div
                             className="flex items-center gap-6 group hover:bg-slate-800/40 transition-all cursor-pointer p-4 rounded-xl"
                             onClick={() => loadDetails(client.client_id)}
