@@ -755,11 +755,32 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
                                     <p className="text-xs uppercase tracking-wider text-slate-500">Client Details</p>
                                     {editClientId === client.client_id ? (
                                         <div className="flex gap-2">
-                                            <button className="px-3 py-1 text-xs rounded-full bg-emerald-600 text-white" onClick={saveEdit}><Save className="w-4 h-4" /></button>
-                                            <button className="px-3 py-1 text-xs rounded-full border border-slate-700 text-slate-300" onClick={() => setEditClientId(null)}><X className="w-4 h-4" /></button>
+                                            <button
+                                                className="px-4 py-1.5 text-xs rounded-full text-white flex items-center gap-2 transition-opacity"
+                                                onClick={saveEdit}
+                                                style={{ backgroundColor: '#10b981', cursor: 'pointer' }}
+                                            >
+                                                <Save className="w-3 h-3" />
+                                                <span>Save</span>
+                                            </button>
+                                            <button
+                                                className="px-4 py-1.5 text-xs rounded-full text-white flex items-center gap-2 transition-opacity"
+                                                onClick={() => setEditClientId(null)}
+                                                style={{ backgroundColor: '#ef4444', cursor: 'pointer' }}
+                                            >
+                                                <X className="w-3 h-3" />
+                                                <span>Cancel</span>
+                                            </button>
                                         </div>
                                     ) : (
-                                        <button className="px-3 py-1 text-xs rounded-full border border-slate-700 text-slate-300" onClick={() => startEdit(client)}><Pencil className="w-4 h-4" /></button>
+                                        <button
+                                            className="px-4 py-1.5 text-xs rounded-full text-white flex items-center gap-2 transition-opacity"
+                                            onClick={() => startEdit(client)}
+                                            style={{ backgroundColor: '#3b82f6', cursor: 'pointer' }}
+                                        >
+                                            <Pencil className="w-3 h-3" />
+                                            <span>Edit Client</span>
+                                        </button>
                                     )}
                                 </div>
 
@@ -914,117 +935,144 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
                                             </div>
                                         </div>
 
-                                        {/* Visual Charts Section - Compact */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                            {/* ISA Allowance Progress */}
-                                            <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
-                                                <p className="text-xs font-semibold text-white mb-1.5">ISA Allowance Utilization</p>
-                                                <div className="space-y-1">
+                                        {/* Visual Charts Section - 3 Columns */}
+                                        <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}> {/* Forced 3 columns, Side by Side */}
+                                            {/* 1. ISA Allowance Progress */}
+                                            <div className="p-6 rounded-xl border border-slate-800 flex flex-col justify-center h-full" style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)' }}> {/* Increased padding to p-6 */}
+                                                <p className="text-sm font-semibold text-white mb-4">ISA Allowance</p>
+                                                <div className="space-y-3">
                                                     {(() => {
                                                         const maxAllowance = 20000; // UK ISA limit
                                                         const used = maxAllowance - (client.isa_allowance_remaining || 0);
                                                         const percentage = (used / maxAllowance) * 100;
                                                         return (
                                                             <>
-                                                                <div className="flex justify-between text-[10px] text-slate-400 mb-0.5">
+                                                                <div className="flex justify-between text-xs text-slate-400">
                                                                     <span>Used: £{used.toLocaleString()}</span>
                                                                     <span>Remaining: £{(client.isa_allowance_remaining || 0).toLocaleString()}</span>
                                                                 </div>
-                                                                <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+                                                                <div className="w-full h-4 bg-slate-800 rounded-full" style={{ overflow: 'hidden' }}>
                                                                     <div
-                                                                        className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-500"
-                                                                        style={{ width: `${percentage}%` }}
-                                                                    ></div>
+                                                                        className="h-full transition-all duration-500"
+                                                                        style={{
+                                                                            width: `${percentage}%`,
+                                                                            backgroundImage: 'linear-gradient(to right, #10b981, #3b82f6)',
+                                                                            position: 'relative'
+                                                                        }}
+                                                                    >
+                                                                        <div className="absolute inset-0 bg-white/10" style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}></div>
+                                                                    </div>
                                                                 </div>
-                                                                <p className="text-[10px] text-center text-slate-400 mt-1">{percentage.toFixed(0)}% Utilized</p>
+                                                                <div className="flex justify-between items-center mt-2">
+                                                                    <span className="text-xs text-slate-500">Utilization</span>
+                                                                    <span className="text-sm font-bold text-slate-200">{percentage.toFixed(0)}%</span>
+                                                                </div>
                                                             </>
                                                         );
                                                     })()}
                                                 </div>
                                             </div>
 
-                                            {/* Protection Coverage Visual */}
-                                            <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
-                                                <p className="text-xs font-semibold text-white mb-1.5">Protection Coverage</p>
-                                                <div className="flex items-center justify-center h-16">
-                                                    {client.has_protection_gaps ? (
-                                                        <div className="text-center">
-                                                            <div className="w-12 h-12 mx-auto rounded-full bg-orange-500/20 border-2 border-orange-500 flex items-center justify-center mb-1">
-                                                                <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                                </svg>
-                                                            </div>
-                                                            <p className="text-[10px] text-orange-400 font-medium">Gaps Identified</p>
-                                                            <p className="text-[10px] text-slate-500">Review Required</p>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-center">
-                                                            <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center mb-1">
-                                                                <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                                                </svg>
-                                                            </div>
-                                                            <p className="text-[10px] text-emerald-400 font-medium">Well Protected</p>
-                                                            <p className="text-[10px] text-slate-500">No Gaps Found</p>
-                                                        </div>
-                                                    )}
+                                            {/* 2. Portfolio Composition Donut Chart */}
+                                            <div className="p-6 rounded-xl border border-slate-800 flex flex-col items-center justify-center h-full" style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)' }}>
+                                                <p className="text-sm font-semibold text-white mb-4 w-full text-left">Portfolio Split</p>
+                                                <div className="w-full" style={{ height: '180px' }}>
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <PieChart>
+                                                            <Pie
+                                                                activeIndex={activeIndex}
+                                                                activeShape={renderActiveShape}
+                                                                onMouseEnter={(_, index) => setActiveIndex(index)}
+                                                                data={[
+                                                                    { name: 'Equities', value: 40 },
+                                                                    { name: 'Fixed Income', value: 30 },
+                                                                    { name: 'Property', value: 20 },
+                                                                    { name: 'Cash', value: 10 },
+                                                                ]}
+                                                                cx="50%"
+                                                                cy="50%"
+                                                                innerRadius="50%"
+                                                                outerRadius="70%"
+                                                                paddingAngle={4}
+                                                                dataKey="value"
+                                                            >
+                                                                {['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'].map((entry, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={entry} />
+                                                                ))}
+                                                            </Pie>
+                                                            <Tooltip
+                                                                isAnimationActive={false}
+                                                                content={({ active, payload }) => {
+                                                                    if (active && payload && payload.length) {
+                                                                        return (
+                                                                            <div className="bg-slate-900/90 border border-slate-700 p-2 rounded-lg shadow-xl backdrop-blur-sm z-50">
+                                                                                <p className="text-slate-300 text-xs font-medium">{payload[0].name}</p>
+                                                                                <p className="text-white text-sm font-bold">
+                                                                                    {payload[0].value}%
+                                                                                </p>
+                                                                            </div>
+                                                                        );
+                                                                    }
+                                                                    return null;
+                                                                }}
+                                                            />
+                                                            <Legend
+                                                                verticalAlign="middle"
+                                                                align="right"
+                                                                layout="vertical"
+                                                                iconType="circle"
+                                                                iconSize={8}
+                                                                wrapperStyle={{ fontSize: '10px', right: 0 }}
+                                                            />
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Portfolio Composition Donut Chart - Compact */}
-                                        <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 flex flex-col items-center justify-center">
-                                            <p className="text-xs font-semibold text-white mb-2 w-full text-left">Portfolio Composition</p>
-                                            <div style={{ width: '100%', height: 180 }}>
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <PieChart>
-                                                        <Pie
-                                                            activeIndex={activeIndex}
-                                                            activeShape={renderActiveShape}
-                                                            onMouseEnter={(_, index) => setActiveIndex(index)}
-                                                            data={[
-                                                                { name: 'Equities', value: 40 },
-                                                                { name: 'Fixed Income', value: 30 },
-                                                                { name: 'Property', value: 20 },
-                                                                { name: 'Cash', value: 10 },
-                                                            ]}
-                                                            cx="50%"
-                                                            cy="50%"
-                                                            innerRadius={40}
-                                                            outerRadius={60}
-                                                            paddingAngle={5}
-                                                            dataKey="value"
-                                                        >
-                                                            {['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'].map((entry, index) => (
-                                                                <Cell key={`cell-${index}`} fill={entry} />
-                                                            ))}
-                                                        </Pie>
-                                                        <Tooltip
-                                                            isAnimationActive={false}
-                                                            content={({ active, payload }) => {
-                                                                if (active && payload && payload.length) {
-                                                                    return (
-                                                                        <div className="bg-slate-900/90 border border-slate-700 p-2 rounded-lg shadow-xl backdrop-blur-sm">
-                                                                            <p className="text-slate-300 text-xs font-medium">{payload[0].name}</p>
-                                                                            <p className="text-white text-sm font-bold">
-                                                                                {payload[0].value}%
-                                                                            </p>
-                                                                        </div>
-                                                                    );
-                                                                }
-                                                                return null;
-                                                            }}
-                                                        />
-                                                        <Legend
-                                                            verticalAlign="middle"
-                                                            align="right"
-                                                            layout="vertical"
-                                                            iconType="circle"
-                                                            iconSize={8}
-                                                            wrapperStyle={{ fontSize: '10px' }}
-                                                        />
-                                                    </PieChart>
-                                                </ResponsiveContainer>
+                                            {/* 3. Protection Coverage Visual */}
+                                            <div className="p-6 rounded-xl border border-slate-800 flex flex-col items-center justify-center h-full text-center" style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)' }}>
+                                                <p className="text-sm font-semibold text-white mb-4 w-full text-left">Protection</p>
+                                                <div className="flex flex-col items-center justify-center flex-1">
+                                                    {client.has_protection_gaps ? (
+                                                        <>
+                                                            <div
+                                                                className="rounded-full border-2 flex items-center justify-center mb-3"
+                                                                style={{
+                                                                    width: '4rem',
+                                                                    height: '4rem',
+                                                                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                                                                    borderColor: 'rgba(249, 115, 22, 0.5)',
+                                                                    boxShadow: '0 0 15px rgba(249,115,22,0.2)'
+                                                                }}
+                                                            >
+                                                                <svg style={{ width: '2rem', height: '2rem', color: 'rgb(249, 115, 22)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                                </svg>
+                                                            </div>
+                                                            <p className="text-orange-400 font-semibold text-sm">Gaps Identified</p>
+                                                            <p className="text-xs text-slate-500 mt-1">{client.protection_gaps || 'Coverage review required'}</p>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div
+                                                                className="rounded-full border-2 flex items-center justify-center mb-3"
+                                                                style={{
+                                                                    width: '4rem',
+                                                                    height: '4rem',
+                                                                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                                                    borderColor: 'rgba(16, 185, 129, 0.5)',
+                                                                    boxShadow: '0 0 15px rgba(16,185,129,0.2)'
+                                                                }}
+                                                            >
+                                                                <svg style={{ width: '2rem', height: '2rem', color: 'rgb(16, 185, 129)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                                </svg>
+                                                            </div>
+                                                            <p className="text-emerald-400 font-semibold text-sm">Fully Protected</p>
+                                                            <p className="text-xs text-slate-500 mt-1">No gaps found in analysis</p>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 

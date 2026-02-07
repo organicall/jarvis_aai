@@ -321,12 +321,15 @@ const MeetingPrep = ({ initialClientId }) => {
                         <button
                             onClick={handleGenerate}
                             disabled={!selectedClientId || isGenerating}
-                            className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all mt-4 ${!selectedClientId
-                                ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                                : isGenerating
-                                    ? 'bg-blue-600/50 text-white/50 cursor-wait'
-                                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-purple-900/20'
-                                }`}
+                            className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all mt-4 text-white shadow-lg"
+                            style={{
+                                backgroundImage: !selectedClientId
+                                    ? 'none'
+                                    : 'linear-gradient(to right, #2563eb, #9333ea)',
+                                backgroundColor: !selectedClientId ? '#1e293b' : 'transparent',
+                                cursor: !selectedClientId ? 'not-allowed' : isGenerating ? 'wait' : 'pointer',
+                                opacity: !selectedClientId ? 0.5 : isGenerating ? 0.7 : 1
+                            }}
                         >
                             {isGenerating ? (
                                 <>
