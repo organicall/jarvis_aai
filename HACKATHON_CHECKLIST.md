@@ -28,7 +28,7 @@ Completed:
 - Environment variables guide
 - Step-by-step local run instructions
 - Project structure
-- Database setup scripts
+
 - Security notes
 
 ### Actions Required

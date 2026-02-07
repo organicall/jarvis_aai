@@ -11,6 +11,47 @@ Financial advisors face significant challenges managing client data, conducting 
 
 JARVIS is an AI-powered platform built to streamline financial advisory workflows. It automates document processing, generates intelligent insights, and helps advisors prepare comprehensively for client meetings.
 
+## Solution Overview
+
+```mermaid
+flowchart LR
+    A["Advisor Logs In"] --> B["Dashboard (Command Center)"]
+    B --> C["Clients Tab: Search + Select Client"]
+    C --> D["Meeting Prep: Select Meeting Type"]
+    D --> E["Generate Brief"]
+
+    E --> F["Client Data (Supabase)"]
+    E --> G["Parsed Documents (Supabase)"]
+    F --> H["AI Proxy (Node /api/groq)"]
+    G --> H
+    H --> I["Groq LLM"]
+
+    I --> J["Structured Meeting Brief"]
+    J --> J1["Summary + Financial Snapshot"]
+    J --> J2["Goals + Critical Actions"]
+    J --> J3["Risks + Opportunities"]
+    J --> J4["Talking Points + Follow-up Email"]
+
+    C --> K["Finance Chatbot (Right Panel)"]
+    K --> H
+    H --> L["Context-Aware Advisor Suggestions"]
+    L --> M["Advisor Notes / Actions"]
+
+    J --> N["Investments Tab"]
+    J --> O["Protection Tab"]
+    J --> P["Compliance Tab"]
+
+    N --> Q["Portfolio Direction + Suitability Insights"]
+    O --> R["Protection Gap Analysis"]
+    P --> S["Audit-Ready Documentation"]
+
+    Q --> T["Final Advice Recommendation"]
+    R --> T
+    S --> T
+
+    T --> U["Post-Meeting Actions: Email, Tasks, CRM Update"]
+```
+
 ### Core Features
 
 - Intelligent document parsing that automatically extracts client data from Word documents
@@ -88,56 +129,9 @@ VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 4. Database Setup
 
-In your Supabase SQL editor, run the following to create the clients table:
 
-```sql
-CREATE TABLE clients (
-  client_id TEXT PRIMARY KEY,
-  client_name TEXT NOT NULL,
-  total_aum DECIMAL(15,2),
-  total_investments DECIMAL(15,2),
-  total_protection DECIMAL(15,2),
-  critical_action TEXT,
-  last_review_date DATE,
-  next_review_date DATE,
-  next_review_note TEXT,
-  status TEXT DEFAULT 'active',
-  raw_document TEXT,
-  parsed_data JSONB,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
-ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Enable all operations" ON clients
-  FOR ALL USING (true);
-```
-
-Create the parsed documents table:
-
-```sql
-CREATE TABLE parsed_documents (
-  id SERIAL PRIMARY KEY,
-  client_id TEXT REFERENCES clients(client_id) ON DELETE CASCADE,
-  filename TEXT NOT NULL,
-  file_size INTEGER,
-  parsed_at TIMESTAMP DEFAULT NOW(),
-  raw_text TEXT,
-  parsed_json JSONB,
-  parsing_status TEXT DEFAULT 'success',
-  error_message TEXT
-);
-
-ALTER TABLE parsed_documents ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Enable all operations" ON parsed_documents
-  FOR ALL USING (true);
-```
-
-### 5. Run the Application
+### 4. Run the Application
 
 Start both the backend and frontend simultaneously:
 
