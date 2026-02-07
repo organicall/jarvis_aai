@@ -4,6 +4,33 @@ import { Search, Filter, ChevronDown, ChevronUp, Pencil, Save, X } from 'lucide-
 import { supabase } from '../lib/supabase';
 import { fetchClients, fetchClientData } from '../lib/db';
 import { aiSchemaPrompt } from '../data/aiSchemaPrompt';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
+
+const renderActiveShape = (props) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+    return (
+        <g>
+            <Sector
+                cx={cx}
+                cy={cy}
+                innerRadius={innerRadius}
+                outerRadius={outerRadius + 8}
+                startAngle={startAngle}
+                endAngle={endAngle}
+                fill={fill}
+            />
+            <Sector
+                cx={cx}
+                cy={cy}
+                startAngle={startAngle}
+                endAngle={endAngle}
+                innerRadius={outerRadius + 10}
+                outerRadius={outerRadius + 12}
+                fill={fill}
+            />
+        </g>
+    );
+};
 
 const SECTION_TYPES = [
     'personal_details',
@@ -117,6 +144,7 @@ const ClientList = ({ selectedClientId }) => {
     const [clientSections, setClientSections] = useState({});
     const [detailLoading, setDetailLoading] = useState(false);
     const [editClientId, setEditClientId] = useState(null);
+    const [activeIndex, setActiveIndex] = useState(0); // State for Pie Chart hover
     const [editForm, setEditForm] = useState(emptyNote);
     const [newNote, setNewNote] = useState(emptyNote);
     const [showNewNote, setShowNewNote] = useState(false);
@@ -938,70 +966,58 @@ const ClientList = ({ selectedClientId }) => {
                                         </div>
 
                                         {/* Portfolio Composition Donut Chart - Compact */}
-                                        <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
-                                            <p className="text-xs font-semibold text-white mb-2">Portfolio Composition</p>
-                                            <div className="flex items-center gap-3">
-                                                {/* Donut Chart */}
-                                                <div className="relative w-28 h-28 flex-shrink-0">
-                                                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120" width="112" height="112">
-                                                        {/* Background circle */}
-                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#1e293b" strokeWidth="20" />
-                                                        {/* Equity segment (40%) */}
-                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#3b82f6" strokeWidth="20"
-                                                            strokeDasharray={`${2 * Math.PI * 50 * 0.4} ${2 * Math.PI * 50}`}
-                                                            strokeDashoffset="0" />
-                                                        {/* Fixed Income (30%) */}
-                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" strokeWidth="20"
-                                                            strokeDasharray={`${2 * Math.PI * 50 * 0.3} ${2 * Math.PI * 50}`}
-                                                            strokeDashoffset={`-${2 * Math.PI * 50 * 0.4}`} />
-                                                        {/* Property (20%) */}
-                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#a855f7" strokeWidth="20"
-                                                            strokeDasharray={`${2 * Math.PI * 50 * 0.2} ${2 * Math.PI * 50}`}
-                                                            strokeDashoffset={`-${2 * Math.PI * 50 * 0.7}`} />
-                                                        {/* Cash (10%) */}
-                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" strokeWidth="20"
-                                                            strokeDasharray={`${2 * Math.PI * 50 * 0.1} ${2 * Math.PI * 50}`}
-                                                            strokeDashoffset={`-${2 * Math.PI * 50 * 0.9}`} />
-                                                    </svg>
-                                                    <div className="absolute inset-0 flex items-center justify-center">
-                                                        <div className="text-center">
-                                                            <p className="text-base font-bold text-white leading-none">100%</p>
-                                                            <p className="text-[9px] text-slate-500 leading-tight">Allocated</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Legend - Compact */}
-                                                <div className="flex-1 grid grid-cols-2 gap-x-3 gap-y-1.5">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></div>
-                                                        <div>
-                                                            <p className="text-[10px] text-slate-300 leading-tight">Equities</p>
-                                                            <p className="text-xs font-semibold text-white leading-tight">40%</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></div>
-                                                        <div>
-                                                            <p className="text-[10px] text-slate-300 leading-tight">Fixed Income</p>
-                                                            <p className="text-xs font-semibold text-white leading-tight">30%</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0"></div>
-                                                        <div>
-                                                            <p className="text-[10px] text-slate-300 leading-tight">Property</p>
-                                                            <p className="text-xs font-semibold text-white leading-tight">20%</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0"></div>
-                                                        <div>
-                                                            <p className="text-[10px] text-slate-300 leading-tight">Cash</p>
-                                                            <p className="text-xs font-semibold text-white leading-tight">10%</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                        <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 flex flex-col items-center justify-center">
+                                            <p className="text-xs font-semibold text-white mb-2 w-full text-left">Portfolio Composition</p>
+                                            <div style={{ width: '100%', height: 180 }}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <PieChart>
+                                                        <Pie
+                                                            activeIndex={activeIndex}
+                                                            activeShape={renderActiveShape}
+                                                            onMouseEnter={(_, index) => setActiveIndex(index)}
+                                                            data={[
+                                                                { name: 'Equities', value: 40 },
+                                                                { name: 'Fixed Income', value: 30 },
+                                                                { name: 'Property', value: 20 },
+                                                                { name: 'Cash', value: 10 },
+                                                            ]}
+                                                            cx="50%"
+                                                            cy="50%"
+                                                            innerRadius={40}
+                                                            outerRadius={60}
+                                                            paddingAngle={5}
+                                                            dataKey="value"
+                                                        >
+                                                            {['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'].map((entry, index) => (
+                                                                <Cell key={`cell-${index}`} fill={entry} />
+                                                            ))}
+                                                        </Pie>
+                                                        <Tooltip
+                                                            isAnimationActive={false}
+                                                            content={({ active, payload }) => {
+                                                                if (active && payload && payload.length) {
+                                                                    return (
+                                                                        <div className="bg-slate-900/90 border border-slate-700 p-2 rounded-lg shadow-xl backdrop-blur-sm">
+                                                                            <p className="text-slate-300 text-xs font-medium">{payload[0].name}</p>
+                                                                            <p className="text-white text-sm font-bold">
+                                                                                {payload[0].value}%
+                                                                            </p>
+                                                                        </div>
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            }}
+                                                        />
+                                                        <Legend
+                                                            verticalAlign="middle"
+                                                            align="right"
+                                                            layout="vertical"
+                                                            iconType="circle"
+                                                            iconSize={8}
+                                                            wrapperStyle={{ fontSize: '10px' }}
+                                                        />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
                                             </div>
                                         </div>
 
