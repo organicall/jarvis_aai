@@ -1,5 +1,8 @@
 # JARVIS - Financial Advisor AI Assistant
 
+**Live Demo:** https://jarvis-aai.vercel.app/  
+**Video Demo:** https://youtu.be/ItM7L4wCHXE
+
 ## Problem Statement
 
 Financial advisors face significant challenges managing client data, conducting portfolio reviews, and preparing for meetings. Traditional workflows are time-consuming and error-prone, leading to missed opportunities and inefficient client service.
