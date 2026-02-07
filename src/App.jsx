@@ -57,8 +57,25 @@ const App = () => {
               <input type="text" placeholder="Search client, note, task..." />
               <span className="search-hint">⌘K</span>
             </div>
-            <button className="action-btn">New Note</button>
-            <button className="action-btn primary">Start Review</button>
+            <button
+              className="action-btn"
+              onClick={() => window.open('https://docs.google.com/document/create', '_blank')}
+              title="Create a new Google Doc"
+            >
+              New Note
+            </button>
+            <button
+              className="action-btn primary"
+              onClick={() => {
+                // Navigate to Meeting Prep and show review checklist
+                setActiveTab('meeting');
+                // TODO: Open review workflow modal or panel
+                alert('Start Review functionality:\n\n• Generate AI-powered meeting brief\n• Review client portfolio\n• Prepare recommendations\n• Create action items\n\nThis will be implemented next!');
+              }}
+              title="Start annual review workflow"
+            >
+              Start Review
+            </button>
             <div className="avatar-glow" />
           </div>
         </header>
