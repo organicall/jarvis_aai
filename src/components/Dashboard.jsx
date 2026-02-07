@@ -1,57 +1,139 @@
-import React, { useState, useMemo } from 'react';
-import { clients } from '../data/clients';
+import React, { useState, useEffect, useMemo } from 'react';
+import { fetchClients } from '../lib/db.js';
 import {
     AlertTriangle,
     TrendingUp,
     Calendar,
-    CheckCircle2,
-    ArrowRight,
     DollarSign,
-    Briefcase
+    Users,
+    ArrowRight,
+    Shield
 } from 'lucide-react';
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell
-} from 'recharts';
 
-const Dashboard = () => {
-    // --- Analytics ---
+const Dashboard = ({ onNavigateToClient }) => {
+    const [clients, setClients] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const data = await fetchClients();
+            setClients(data);
+            setError(null);
+        } catch (err) {
+            console.error('Failed to load clients:', err);
+            setError('Failed to load dashboard data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Calculate real metrics from database
     const stats = useMemo(() => {
-        return {
-            totalClients: clients.length,
-            totalAUM: clients.reduce((acc, c) => acc + (c.financials.netWorth || 0), 0),
-            urgentRisks: clients.reduce((acc, c) => acc + c.risks.filter(r => r.type === 'critical').length, 0),
-            openOpportunities: clients.reduce((acc, c) => acc + c.opportunities.length, 0)
+        if (!clients.length) return {
+            totalAUM: 0,
+            totalClients: 0,
+            criticalActions: 0,
+            upcomingReviews: 0
         };
+
+        const totalAUM = clients.reduce((acc, c) => acc + (c.net_worth || 0), 0);
+        const criticalActions = clients.filter(c => c.has_urgent_items).length;
+
+        // Calculate upcoming reviews (next 30 days)
+        const today = new Date();
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+        const upcomingReviews = clients.filter(c => {
+            if (!c.next_review_date) return false;
+            const reviewDate = new Date(c.next_review_date);
+            return reviewDate >= today && reviewDate <= thirtyDaysFromNow;
+        }).length;
+
+        return {
+            totalAUM,
+            totalClients: clients.length,
+            criticalActions,
+            upcomingReviews
+        };
+    }, [clients]);
+
+    // Get clients with urgent items
+    const urgentClients = useMemo(() => {
+        return clients
+            .filter(c => c.has_urgent_items)
+            .map(c => ({
+                id: c.client_id,
+                name: c.client_name,
+                items: c.urgent_items || 'No details provided'
+            }));
+    }, [clients]);
+
+    // Get upcoming reviews
+    const upcomingReviewClients = useMemo(() => {
+        const today = new Date();
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+        return clients
+            .filter(c => {
+                if (!c.next_review_date) return false;
+                const reviewDate = new Date(c.next_review_date);
+                return reviewDate >= today && reviewDate <= thirtyDaysFromNow;
+            })
+            .sort((a, b) => new Date(a.next_review_date) - new Date(b.next_review_date))
+            .slice(0, 5);
+    }, [clients]);
+
+    // Calculate ISA utilization
+    const isaStats = useMemo(() => {
+        if (!clients.length) return { avgUtilization: 0, clientsWithGaps: 0 };
+
+        const clientsWithISAData = clients.filter(c => c.isa_allowance_used != null && c.isa_allowance_remaining != null);
+
+        if (!clientsWithISAData.length) return { avgUtilization: 0, clientsWithGaps: 0 };
+
+        const totalUtilization = clientsWithISAData.reduce((acc, c) => {
+            const total = c.isa_allowance_used + c.isa_allowance_remaining;
+            return acc + (total > 0 ? (c.isa_allowance_used / total) * 100 : 0);
+        }, 0);
+
+        const avgUtilization = Math.round(totalUtilization / clientsWithISAData.length);
+        const clientsWithGaps = clientsWithISAData.filter(c => c.isa_allowance_remaining > 1000).length;
+
+        return { avgUtilization, clientsWithGaps };
+    }, [clients]);
+
+    // Calculate protection gaps
+    const protectionGaps = useMemo(() => {
+        return clients.filter(c => c.protection_gaps && c.protection_gaps.trim().length > 0).length;
+    }, [clients]);
+
+    // Calculate days until tax year end (April 5)
+    const daysUntilTaxYearEnd = useMemo(() => {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        let taxYearEnd = new Date(currentYear, 3, 5); // April 5
+
+        if (today > taxYearEnd) {
+            taxYearEnd = new Date(currentYear + 1, 3, 5);
+        }
+
+        const diffTime = taxYearEnd - today;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }, []);
 
-    const criticalRisks = useMemo(() => {
-        return clients.flatMap(c => c.risks
-            .filter(r => r.type === 'critical' || r.type === 'high')
-            .map(r => ({ client: c.name, ...r }))
-        );
-    }, []);
-
-    const isaGapData = useMemo(() => {
-        return clients.map(c => ({
-            name: c.name.split(' ')[0], // First name for brevity
-            used: ((c.financials.assets.isa || 0) / 40000) * 100, // Roughly generalized for viz
-            unused: ((Object.values(c.financials.isaAllowance).reduce((a, b) => a + b, 0)) / 40000) * 100 // Very rough approx for viz
-        })).slice(0, 5);
-    }, []);
-
-    // --- Components ---
-
-    const StatCard = ({ icon: Icon, label, value, trend, color, subtext }) => (
-        <div className="glass-card flex items-start justify-between relative overflow-hidden group">
+    const StatCard = ({ icon: Icon, label, value, subtext, color, onClick }) => (
+        <div
+            className={`glass-card flex items-start justify-between relative overflow-hidden group ${onClick ? 'cursor-pointer' : ''}`}
+            onClick={onClick}
+        >
             <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity ${color}`}>
                 <Icon className="w-24 h-24" />
             </div>
@@ -61,125 +143,153 @@ const Dashboard = () => {
                 {subtext && <p className="text-slate-500 text-xs">{subtext}</p>}
             </div>
             <div className={`p-3 rounded-xl bg-opacity-20 ${color} bg-white backdrop-blur-sm`}>
-                <Icon className={`w-6 h-6 ${color.replace('text-', '')} text-white`} />
+                <Icon className={`w-6 h-6 text-white`} />
             </div>
         </div>
     );
 
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="text-slate-400">Loading dashboard...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="text-red-400">{error}</div>
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-6">
-            {/* Search / Context Bar */}
-            <div className="relative">
-                <input
-                    type="text"
-                    placeholder="Ask Jarvis: 'Who has available ISA allowance?'"
-                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-4 px-6 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
-                />
-                <div className="absolute right-4 top-4 bg-slate-700 text-xs font-mono px-2 py-1 rounded text-slate-400 border border-slate-600">
-                    CMD + K
+        <div className="space-y-6 p-6">
+            {/* KPI Cards - Horizontal Layout */}
+            <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[240px]">
+                    <StatCard
+                        icon={DollarSign}
+                        label="Total AUM"
+                        value={`£${(stats.totalAUM / 1000000).toFixed(2)}M`}
+                        subtext={`${stats.totalClients} clients`}
+                        color="bg-emerald-500"
+                    />
+                </div>
+                <div className="flex-1 min-w-[240px]">
+                    <StatCard
+                        icon={Users}
+                        label="Total Clients"
+                        value={stats.totalClients}
+                        subtext="Active portfolios"
+                        color="bg-blue-500"
+                    />
+                </div>
+                <div className="flex-1 min-w-[240px]">
+                    <StatCard
+                        icon={AlertTriangle}
+                        label="Critical Actions"
+                        value={stats.criticalActions}
+                        subtext="Require immediate attention"
+                        color="bg-red-500"
+                    />
+                </div>
+                <div className="flex-1 min-w-[240px]">
+                    <StatCard
+                        icon={Calendar}
+                        label="Upcoming Reviews"
+                        value={stats.upcomingReviews}
+                        subtext="Next 30 days"
+                        color="bg-purple-500"
+                    />
                 </div>
             </div>
 
-            {/* KPI Cards */}
-            <div className="grid grid-dashboard gap-6">
-                <StatCard
-                    icon={DollarSign}
-                    label="Total AUM"
-                    value={`£${(stats.totalAUM / 1000000).toFixed(2)}M`}
-                    subtext="+2.4% vs last month"
-                    color="bg-emerald-500"
-                />
-                <StatCard
-                    icon={AlertTriangle}
-                    label="Critical Risks"
-                    value={stats.urgentRisks}
-                    subtext="Requires immediate action"
-                    color="bg-red-500"
-                />
-                <StatCard
-                    icon={TrendingUp}
-                    label="Opportunities"
-                    value={stats.openOpportunities}
-                    subtext="Unused allowances & tax efficiency"
-                    color="bg-blue-500"
-                />
-                <StatCard
-                    icon={Calendar}
-                    label="Upcoming Reviews"
-                    value="2"
-                    subtext="Next 30 days"
-                    color="bg-purple-500"
-                />
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Feed: Critical Actions */}
+                {/* Main Feed: Priority Actions */}
                 <div className="lg:col-span-2 space-y-6">
+                    {/* Urgent Items */}
                     <div className="glass-panel p-6">
                         <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                             <AlertTriangle className="text-red-400 w-5 h-5" />
                             Priority Actions Required
                         </h3>
 
-                        <div className="space-y-4">
-                            {criticalRisks.map((risk, idx) => (
-                                <div key={idx} className="flex items-start gap-4 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 hover:bg-slate-800/50 transition-colors group cursor-pointer">
-                                    <div className={`mt-1 w-2 h-2 rounded-full ${risk.type === 'critical' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-orange-500'}`} />
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <h4 className="font-semibold text-slate-200 group-hover:text-blue-400 transition-colors">
-                                                {risk.client}
-                                            </h4>
-                                            <span className={`text-[10px] px-2 py-0.5 rounded border uppercase tracking-wider ${risk.type === 'critical'
-                                                    ? 'border-red-500/30 bg-red-500/10 text-red-400'
-                                                    : 'border-orange-500/30 bg-orange-500/10 text-orange-400'
-                                                }`}>
-                                                {risk.type}
-                                            </span>
+                        {urgentClients.length === 0 ? (
+                            <div className="text-center py-8 text-slate-500">
+                                <p>No urgent actions at the moment</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {urgentClients.map((client) => (
+                                    <div
+                                        key={client.id}
+                                        className="flex items-start gap-4 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 hover:bg-slate-800/50 transition-colors group cursor-pointer"
+                                    >
+                                        <div className="mt-1 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <h4 className="font-semibold text-slate-200 group-hover:text-blue-400 transition-colors">
+                                                    {client.name}
+                                                </h4>
+                                                <span className="text-[10px] px-2 py-0.5 rounded border border-red-500/30 bg-red-500/10 text-red-400 uppercase tracking-wider">
+                                                    CRITICAL
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-slate-400">{client.items}</p>
                                         </div>
-                                        <p className="text-sm text-slate-400">{risk.text}</p>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (onNavigateToClient) {
+                                                    onNavigateToClient(client.id);
+                                                }
+                                            }}
+                                            className="opacity-0 group-hover:opacity-100 p-2 hover:bg-slate-700 rounded-lg transition-all text-slate-400 hover:text-white"
+                                        >
+                                            <ArrowRight className="w-4 h-4" />
+                                        </button>
                                     </div>
-                                    <button className="opacity-0 group-hover:opacity-100 p-2 hover:bg-slate-700 rounded-lg transition-all text-slate-400 hover:text-white">
-                                        <ArrowRight className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
+                    {/* Upcoming Reviews */}
                     <div className="glass-panel p-6">
                         <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                             <Calendar className="text-blue-400 w-5 h-5" />
-                            Review Schedule
+                            Upcoming Reviews
                         </h3>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm text-slate-400">
-                                <thead>
-                                    <tr className="border-b border-slate-700 text-xs uppercase tracking-wider text-slate-500">
-                                        <th className="pb-3 pl-2">Client</th>
-                                        <th className="pb-3 text-center">Status</th>
-                                        <th className="pb-3">Next Review</th>
-                                        <th className="pb-3">Last Contact</th>
-                                        <th className="pb-3">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-800">
-                                    {clients.slice(0, 5).map((client) => (
-                                        <tr key={client.id} className="hover:bg-slate-800/30 transition-colors">
-                                            <td className="py-4 pl-2 font-medium text-slate-200">{client.name}</td>
-                                            <td className="py-4 text-center">
-                                                <span className="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded-full border border-emerald-500/20">Active</span>
-                                            </td>
-                                            <td className="py-4 font-mono text-xs">{client.nextReview}</td>
-                                            <td className="py-4">{client.lastReview}</td>
-                                            <td className="py-4">
-                                                <button className="text-blue-400 hover:text-blue-300 text-xs font-semibold hover:underline">Prepare</button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+
+                        {upcomingReviewClients.length === 0 ? (
+                            <div className="text-center py-8 text-slate-500">
+                                <p>No reviews scheduled in the next 30 days</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {upcomingReviewClients.map((client) => (
+                                    <div
+                                        key={client.client_id}
+                                        className="flex items-center justify-between p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 hover:bg-slate-800/50 transition-colors group cursor-pointer"
+                                    >
+                                        <div className="flex-1">
+                                            <h4 className="font-semibold text-slate-200 group-hover:text-blue-400 transition-colors mb-1">
+                                                {client.client_name}
+                                            </h4>
+                                            <p className="text-xs text-slate-500">
+                                                {client.client_id} • Net Worth: £{(client.net_worth / 1000000).toFixed(2)}M
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-mono text-slate-300">{client.next_review_date}</p>
+                                            <p className="text-xs text-slate-500 capitalize">{client.status}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -202,40 +312,56 @@ const Dashboard = () => {
                     <div className="glass-panel p-6 relative overflow-hidden">
                         <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-500 rounded-full blur-3xl opacity-20"></div>
                         <h3 className="text-lg font-bold text-white mb-2">Tax Year End</h3>
-                        <p className="text-slate-400 text-sm mb-4">58 days remaining to utilize allowances.</p>
+                        <p className="text-slate-400 text-sm mb-4">{daysUntilTaxYearEnd} days remaining to utilize allowances.</p>
 
                         <div className="space-y-4">
                             <div>
                                 <div className="flex justify-between text-xs mb-1">
-                                    <span className="text-slate-300">Used ISA Allowances (Portfolio Avg)</span>
-                                    <span className="text-emerald-400">72%</span>
+                                    <span className="text-slate-300">Avg ISA Utilization</span>
+                                    <span className="text-emerald-400">{isaStats.avgUtilization}%</span>
                                 </div>
                                 <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                    <div className="h-full bg-emerald-500 w-[72%]"></div>
+                                    <div className="h-full bg-emerald-500" style={{ width: `${isaStats.avgUtilization}%` }}></div>
                                 </div>
+                                <p className="text-xs text-slate-500 mt-1">{isaStats.clientsWithGaps} clients with available allowance</p>
                             </div>
 
                             <div>
                                 <div className="flex justify-between text-xs mb-1">
-                                    <span className="text-slate-300">Pension Carry Forward Analysis</span>
-                                    <span className="text-blue-400">4 Pending</span>
+                                    <span className="text-slate-300">Protection Gaps</span>
+                                    <span className="text-orange-400">{protectionGaps} clients</span>
                                 </div>
                                 <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-500 w-[30%]"></div>
+                                    <div
+                                        className="h-full bg-orange-500"
+                                        style={{ width: `${clients.length > 0 ? (protectionGaps / clients.length) * 100 : 0}%` }}
+                                    ></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Market Sentiment / News Placeholder */}
+                    {/* Key Insights */}
                     <div className="glass-panel p-6">
-                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Market Context</h3>
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Key Insights</h3>
                         <div className="space-y-3">
-                            <div className="p-3 bg-slate-800/50 rounded-lg border-l-2 border-green-500">
-                                <p className="text-xs text-slate-300 leading-relaxed">BoE holds rates at 5.25%. Inflation outlook stable.</p>
-                            </div>
                             <div className="p-3 bg-slate-800/50 rounded-lg border-l-2 border-blue-500">
-                                <p className="text-xs text-slate-300 leading-relaxed">FTSE 100 sees tech rally, up 1.2% today.</p>
+                                <div className="flex items-start gap-2">
+                                    <Shield className="w-4 h-4 text-blue-400 mt-0.5" />
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-300 mb-1">Protection Coverage</p>
+                                        <p className="text-xs text-slate-400">{protectionGaps} clients need protection review</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-3 bg-slate-800/50 rounded-lg border-l-2 border-emerald-500">
+                                <div className="flex items-start gap-2">
+                                    <TrendingUp className="w-4 h-4 text-emerald-400 mt-0.5" />
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-300 mb-1">ISA Opportunities</p>
+                                        <p className="text-xs text-slate-400">{isaStats.clientsWithGaps} clients can utilize remaining allowance</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

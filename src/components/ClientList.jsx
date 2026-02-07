@@ -731,18 +731,127 @@ const ClientList = ({ selectedClientId }) => {
                                 {detailLoading ? (
                                     <p className="text-sm text-slate-400">Loading details...</p>
                                 ) : editClientId === client.client_id ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        <input className="input" value={editForm.client_name} onChange={(e) => setEditForm({ ...editForm, client_name: e.target.value })} />
-                                        <input className="input" value={editForm.adviser_name} onChange={(e) => setEditForm({ ...editForm, adviser_name: e.target.value })} />
-                                        <input className="input" value={editForm.combined_income} onChange={(e) => setEditForm({ ...editForm, combined_income: e.target.value })} />
-                                        <input className="input" value={editForm.net_worth} onChange={(e) => setEditForm({ ...editForm, net_worth: e.target.value })} />
-                                        <input className="input" value={editForm.next_review_date} onChange={(e) => setEditForm({ ...editForm, next_review_date: e.target.value })} />
-                                        <input className="input" value={editForm.isa_allowance_remaining} onChange={(e) => setEditForm({ ...editForm, isa_allowance_remaining: e.target.value })} />
-                                        <textarea className="textarea" value={editForm.protection_gaps} onChange={(e) => setEditForm({ ...editForm, protection_gaps: e.target.value })} />
-                                        <textarea className="textarea" value={editForm.urgent_items} onChange={(e) => setEditForm({ ...editForm, urgent_items: e.target.value })} />
-                                        {SECTION_TYPES.map((section) => (
-                                            <textarea key={section} className="textarea" value={editForm.sections[section]} onChange={(e) => setEditForm({ ...editForm, sections: { ...editForm.sections, [section]: e.target.value } })} />
-                                        ))}
+                                    <div className="space-y-4">
+                                        {/* Basic Information */}
+                                        <div className="space-y-3">
+                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Basic Information</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1.5">Client Name *</label>
+                                                    <input
+                                                        className="input"
+                                                        placeholder="Enter client full name"
+                                                        value={editForm.client_name}
+                                                        onChange={(e) => setEditForm({ ...editForm, client_name: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1.5">Adviser Name</label>
+                                                    <input
+                                                        className="input"
+                                                        placeholder="Assigned adviser name"
+                                                        value={editForm.adviser_name}
+                                                        onChange={(e) => setEditForm({ ...editForm, adviser_name: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Financial Information */}
+                                        <div className="space-y-3">
+                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Financial Details</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1.5">Combined Income (£)</label>
+                                                    <input
+                                                        className="input"
+                                                        type="number"
+                                                        placeholder="Annual combined income"
+                                                        value={editForm.combined_income}
+                                                        onChange={(e) => setEditForm({ ...editForm, combined_income: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1.5">Net Worth (£)</label>
+                                                    <input
+                                                        className="input"
+                                                        type="number"
+                                                        placeholder="Total net worth"
+                                                        value={editForm.net_worth}
+                                                        onChange={(e) => setEditForm({ ...editForm, net_worth: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1.5">ISA Allowance Remaining (£)</label>
+                                                    <input
+                                                        className="input"
+                                                        type="number"
+                                                        placeholder="Remaining ISA allowance"
+                                                        value={editForm.isa_allowance_remaining}
+                                                        onChange={(e) => setEditForm({ ...editForm, isa_allowance_remaining: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Review Information */}
+                                        <div className="space-y-3">
+                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Review Schedule</h4>
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-1.5">Next Review Date</label>
+                                                <input
+                                                    className="input"
+                                                    type="date"
+                                                    value={editForm.next_review_date}
+                                                    onChange={(e) => setEditForm({ ...editForm, next_review_date: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Action Items */}
+                                        <div className="space-y-3">
+                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Action Items</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1.5">Protection Gaps</label>
+                                                    <textarea
+                                                        className="textarea h-24"
+                                                        placeholder="List any protection coverage gaps (one per line)"
+                                                        value={editForm.protection_gaps}
+                                                        onChange={(e) => setEditForm({ ...editForm, protection_gaps: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1.5">Urgent Items</label>
+                                                    <textarea
+                                                        className="textarea h-24"
+                                                        placeholder="List urgent action items (one per line)"
+                                                        value={editForm.urgent_items}
+                                                        onChange={(e) => setEditForm({ ...editForm, urgent_items: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Additional Notes */}
+                                        <div className="space-y-3">
+                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Additional Notes</h4>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {SECTION_TYPES.map((section) => (
+                                                    <div key={section}>
+                                                        <label className="block text-xs text-slate-400 mb-1.5 capitalize">
+                                                            {section.replace(/_/g, ' ')}
+                                                        </label>
+                                                        <textarea
+                                                            className="textarea h-24"
+                                                            placeholder={`Enter ${section.replace(/_/g, ' ')} details...`}
+                                                            value={editForm.sections[section]}
+                                                            onChange={(e) => setEditForm({ ...editForm, sections: { ...editForm.sections, [section]: e.target.value } })}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">

@@ -281,7 +281,14 @@ const App = () => {
       <main className="main-content-horizontal">
 
         <div className="content-area">
-          {activeTab === 'dashboard' && <Dashboard />}
+          {activeTab === 'dashboard' && (
+            <Dashboard
+              onNavigateToClient={(clientId) => {
+                setSelectedClientId(clientId);
+                setActiveTab('clients');
+              }}
+            />
+          )}
           {activeTab === 'clients' && <ClientList selectedClientId={selectedClientId} />}
           {activeTab === 'meeting-prep' && <MeetingPrep />}
           {activeTab === 'investments' && <Investments />}
