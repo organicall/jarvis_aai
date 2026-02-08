@@ -99,53 +99,73 @@ Default local URLs:
 <a id="using-the-application-a-z"></a>
 ## I. Using the Application (A-Z)
 
+## Global Navigation and Top Bar
+
+- `Dashboard`, `Clients`, `Meeting Prep`, `Investments`, `Protection`, `Compliance`, `Settings`: switches tabs.
+- Global search (`Search client, note, task...`): searches clients by name, shows top matches, and opens selected client in **Clients**.
+- Keyboard shortcut: `Cmd/Ctrl + K` focuses the global search input.
+- `New Note`: opens a new Google Doc in a new browser tab.
+
 ## Dashboard
 
-Use this tab to:
-- Monitor Total AUM, client count, critical actions, and upcoming reviews
-- Track priority items that need immediate advisor action
-- Start common actions quickly
+- KPI cards (`Total AUM`, `Total Clients`, `Critical Actions`, `Upcoming Reviews`): read-only performance snapshot.
+- Priority Actions row `Arrow` button: opens that client in **Clients** tab.
+- `Add New Client`: opens **Clients** tab and launches Add Client modal.
+- `Generate Reports`: currently visual-only (no click action wired yet).
+- Upcoming Reviews `+` button: opens schedule modal for a new meeting.
+- Upcoming Reviews `Edit` (pencil) button: opens schedule modal for that specific client.
+- Upcoming Reviews `Prep Report`: jumps to **Meeting Prep** with that client pre-selected.
+- Schedule modal `Cancel`: closes modal without saving.
+- Schedule modal `Save Meeting`: saves `next_review_date` and `next_review_note` for selected client.
 
 ## Clients
 
-Use this tab to:
-- Search clients by name/ID
-- Filter by status and urgency
-- Open, review, and edit client details
-- Add new clients with richer context fields
+- `Search clients by name or ID...`: filters visible client list.
+- `Filter`: opens filter menu.
+- Filter options (`All/Active/Inactive`, `Show All/Critical Action Only`): narrows list.
+- `Clear All Filters`: resets filters to default.
+- `Add Client`: opens Add New Client modal.
+- Add Client modal `Upload DOCX`: uploads a `.docx` for AI parsing.
+- Add Client modal `Insert Parsed Data`: copies parsed output into form fields.
+- Add Client modal `Save Client`: creates client + associated section records.
+- Add Client modal `Cancel` or `X`: closes modal and discards unsaved edits.
+- Client row click: expands/collapses full client details.
+- Expanded row `Edit Client`: enables inline edit mode.
+- Expanded row edit mode `Save`: saves changes.
+- Expanded row edit mode `Cancel`: exits edit mode without saving.
 
 ## Meeting Prep
 
-Use this tab to:
-- Select a client and meeting type
-- Generate AI meeting brief
-- Use the finance chatbot for client-context suggestions
-- Save/track notes and prep outputs
+- `Client` dropdown: selects client context.
+- `Meeting Type` dropdown: sets prompt context for generated brief.
+- `Generate Brief`: creates AI brief (falls back to offline brief on AI failure).
+- After brief generation, `Change Client`: clears current brief and returns to selector mode.
+- After brief generation, `Regenerate`: re-runs brief generation for selected client/type.
+- Finance Chatbot quick prompt chips: sends predefined advisor prompts.
+- Finance Chatbot text box + send button: sends custom question in selected client context.
+- Email actions `Copy Email` and `Send Draft`: currently visual-only (no action wired yet).
 
 ## Investments
 
-Use this tab to:
-- Review portfolio direction
-- Evaluate suitability and alignment with goals/risk profile
+- KPIs and charts are read-only analytics.
+- `View by Client`: currently visual-only (no action wired yet).
 
 ## Protection
 
-Use this tab to:
-- Identify protection gaps
-- Prioritize critical vs non-critical issues
+- `Generate Quote` in Unprotected Risks: currently visual-only (no action wired yet).
+- Policy maturity table is read-only and highlights near-term expiries.
 
 ## Compliance
 
-Use this tab to:
-- Review recommendation traceability
-- Keep records audit-ready
-- Check documentation readiness
+- Search box: currently visual-only (not wired to filtering yet).
+- `New Suitability Report`: currently visual-only (no action wired yet).
+- `Download Evidence Pack`: currently visual-only (no action wired yet).
+- `View Gap Analysis`: currently visual-only (no action wired yet).
 
 ## Settings / Config
 
-Use this area to:
-- Review configuration behavior
-- Confirm API key strategy (server key and optional browser-session override)
+- Current page is informational.
+- It indicates API key configuration is handled in Meeting Prep logic and that workflow/automation settings are planned.
 
 ## J. Word Document Parsing Workflow
 
