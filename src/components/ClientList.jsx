@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { fetchClients, fetchClientData } from '../lib/db';
 import { aiSchemaPrompt } from '../data/aiSchemaPrompt';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
+import SectionInfo from './SectionInfo.jsx';
 
 const renderActiveShape = (props) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
@@ -601,7 +602,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
                             {/* Header - Sticky */}
                             <div className="flex items-center justify-between border-b border-slate-800 pb-4 sticky top-0 bg-slate-950 z-10 p-8">
                                 <div>
-                                    <h2 className="text-xl font-bold text-white">Add New Client</h2>
+                                    <h2 className="text-xl font-bold text-white flex items-center">
+                                        Add New Client
+                                        <SectionInfo text="Use this form to add core profile, financial context, urgency flags, and optional section notes for planning." />
+                                    </h2>
                                     <p className="text-sm text-slate-400 mt-1">Fill in client details or upload a DOCX document for AI parsing</p>
                                 </div>
                                 <button
@@ -629,6 +633,7 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                                 </svg>
                                                 AI Document Parser
+                                                <SectionInfo text="Upload a DOCX file and auto-extract structured client details to prefill this form." />
                                             </h3>
                                             <p className="text-sm text-slate-400 mt-1">Upload a .docx file and let AI extract all client data automatically</p>
                                         </div>
@@ -691,7 +696,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
 
                                 {/* Basic Info */}
                                 <div>
-                                    <h4 className="text-sm font-semibold text-white mb-3">Basic Information</h4>
+                                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
+                                        Basic Information
+                                        <SectionInfo text="Capture client identifiers and assigned adviser so records remain traceable and easy to search." />
+                                    </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                         <input
                                             className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
@@ -716,7 +724,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
 
                                 {/* Financial Info */}
                                 <div>
-                                    <h4 className="text-sm font-semibold text-white mb-3">Financial Details</h4>
+                                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
+                                        Financial Details
+                                        <SectionInfo text="These values feed dashboard summaries, prioritization logic, and meeting prep context." />
+                                    </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                                         <input
                                             className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white"
@@ -895,7 +906,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
                                     <div className="space-y-4">
                                         {/* Basic Information */}
                                         <div className="space-y-3">
-                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Basic Information</h4>
+                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center">
+                                                Basic Information
+                                                <SectionInfo text="Update display name and adviser ownership for this client record." />
+                                            </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div>
                                                     <label className="block text-xs text-slate-400 mb-1.5">Client Name *</label>
@@ -920,7 +934,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
 
                                         {/* Financial Information */}
                                         <div className="space-y-3">
-                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Financial Details</h4>
+                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center">
+                                                Financial Details
+                                                <SectionInfo text="Adjust income, net worth, and allowance values to keep recommendations accurate." />
+                                            </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                                 <div>
                                                     <label className="block text-xs text-slate-400 mb-1.5">Combined Income (£)</label>
@@ -957,7 +974,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
 
                                         {/* Review Information */}
                                         <div className="space-y-3">
-                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Review Schedule</h4>
+                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center">
+                                                Review Schedule
+                                                <SectionInfo text="Set the next review date so dashboard review queues and reminders stay current." />
+                                            </h4>
                                             <div>
                                                 <label className="block text-xs text-slate-400 mb-1.5">Next Review Date</label>
                                                 <input
@@ -971,7 +991,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
 
                                         {/* Action Items */}
                                         <div className="space-y-3">
-                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Action Items</h4>
+                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center">
+                                                Action Items
+                                                <SectionInfo text="Track high-priority tasks and known protection gaps requiring adviser action." />
+                                            </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div>
                                                     <label className="block text-xs text-slate-400 mb-1.5">Protection Gaps</label>
@@ -996,7 +1019,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
 
                                         {/* Additional Notes */}
                                         <div className="space-y-3">
-                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Additional Notes</h4>
+                                            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center">
+                                                Additional Notes
+                                                <SectionInfo text="Store rich qualitative notes by section so AI and future reviews have more context." />
+                                            </h4>
                                             <div className="grid grid-cols-1 gap-3">
                                                 {SECTION_TYPES.map((section) => (
                                                     <div key={section}>
@@ -1044,7 +1070,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
                                         <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}> {/* Forced 3 columns, Side by Side */}
                                             {/* 1. ISA Allowance Progress */}
                                             <div className="p-6 rounded-xl border border-slate-800 flex flex-col justify-center h-full" style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)' }}> {/* Increased padding to p-6 */}
-                                                <p className="text-sm font-semibold text-white mb-4">ISA Allowance</p>
+                                                <p className="text-sm font-semibold text-white mb-4 flex items-center">
+                                                    ISA Allowance
+                                                    <SectionInfo text="Uses the UK annual ISA allowance baseline to show used vs remaining amount for this client." />
+                                                </p>
                                                 <div className="space-y-3">
                                                     {(() => {
                                                         const maxAllowance = 20000; // UK ISA limit
@@ -1080,7 +1109,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
 
                                             {/* 2. Portfolio Composition Donut Chart */}
                                             <div className="p-6 rounded-xl border border-slate-800 flex flex-col items-center justify-center h-full" style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)' }}>
-                                                <p className="text-sm font-semibold text-white mb-4 w-full text-left">Portfolio Split</p>
+                                                <p className="text-sm font-semibold text-white mb-4 w-full text-left flex items-center">
+                                                    Portfolio Split
+                                                    <SectionInfo text="Visual summary of asset class distribution to support fast portfolio-shape discussion." />
+                                                </p>
                                                 <div className="w-full" style={{ height: '180px' }}>
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <PieChart>
@@ -1136,7 +1168,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
 
                                             {/* 3. Protection Coverage Visual */}
                                             <div className="p-6 rounded-xl border border-slate-800 flex flex-col items-center justify-center h-full text-center" style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)' }}>
-                                                <p className="text-sm font-semibold text-white mb-4 w-full text-left">Protection</p>
+                                                <p className="text-sm font-semibold text-white mb-4 w-full text-left flex items-center">
+                                                    Protection
+                                                    <SectionInfo text="Indicates whether known protection gaps are present and if coverage review is needed." />
+                                                </p>
                                                 <div className="flex flex-col items-center justify-center flex-1">
                                                     {client.has_protection_gaps ? (
                                                         <>
@@ -1183,7 +1218,10 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
 
                                         {/* Client Sections Data */}
                                         <div>
-                                            <p className="text-xs uppercase tracking-wider text-slate-500 mb-3">Detailed Information</p>
+                                            <p className="text-xs uppercase tracking-wider text-slate-500 mb-3 flex items-center">
+                                                Detailed Information
+                                                <SectionInfo text="Shows parsed or entered section records for quick contextual reference without opening each data source." />
+                                            </p>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-slate-300">
                                                 {(clientSections[client.client_id] || []).map((section) => (
                                                     <div key={section.data_id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors">

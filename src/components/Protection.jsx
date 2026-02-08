@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 // import { clients } from '../data/clients';
 import { Shield, ShieldAlert, Heart, Calendar, CheckCircle } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine } from 'recharts';
+import SectionInfo from './SectionInfo.jsx';
 
 const Protection = ({ clients = [] }) => {
     // --- Analysis Logic ---
@@ -118,6 +119,7 @@ const Protection = ({ clients = [] }) => {
                     <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                         <ShieldAlert className="text-red-500 w-5 h-5" />
                         Unprotected Risks
+                        <SectionInfo text="Lists uncovered or weak protection areas per client so you can prioritize risk-mitigation actions." />
                     </h3>
                     <div className="space-y-4">
                         {criticalGaps.map((gap, idx) => (
@@ -140,7 +142,10 @@ const Protection = ({ clients = [] }) => {
 
                 {/* Timeline View */}
                 <div className="glass-panel p-6 lg:col-span-2">
-                    <h3 className="text-lg font-bold text-white mb-6">Policy Maturity Timeline</h3>
+                    <h3 className="text-lg font-bold text-white mb-6 flex items-center">
+                        Policy Maturity Timeline
+                        <SectionInfo text="Tracks policy expiry years to plan renewals, replacements, and review timing before cover lapses." />
+                    </h3>
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-slate-400">

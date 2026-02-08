@@ -17,6 +17,7 @@ import {
     ShieldAlert,
     CalendarDays
 } from 'lucide-react';
+import SectionInfo from './SectionInfo.jsx';
 
 const MEETING_TYPES = [
     'Annual Review',
@@ -433,7 +434,10 @@ ${prompt}
                                         <BrainCircuit className="w-5 h-5 text-white" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-bold text-white">Meeting Prep Workspace</h2>
+                                        <h2 className="text-xl font-bold text-white flex items-center">
+                                            Meeting Prep Workspace
+                                            <SectionInfo text="Use this workspace to produce a structured prep pack before a meeting, including goals, risks, actions, and talking points." />
+                                        </h2>
                                     </div>
                                 </div>
 
@@ -495,7 +499,10 @@ ${prompt}
 
                 {apiSettingsOpen && (
                     <div className="absolute top-20 right-4 z-50 w-80 glass-panel p-4 shadow-2xl border border-blue-500/30">
-                        <h4 className="text-sm font-bold text-white mb-2">AI Configuration</h4>
+                        <h4 className="text-sm font-bold text-white mb-2 flex items-center">
+                            AI Configuration
+                            <SectionInfo text="Optional browser-session API key override for Groq requests. If empty, the server-side key path is used." />
+                        </h4>
                         <p className="text-xs text-slate-400 mb-3">Optional: provide a Groq API key for this browser session (otherwise the server key is used).</p>
                         <input
                             type="password"
@@ -563,6 +570,7 @@ ${prompt}
                                     <div className="rounded-xl border border-slate-700 bg-slate-900/55 p-6">
                                         <h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3 flex items-center gap-2">
                                             <TrendingUp className="w-4 h-4 text-blue-300" /> Financial Snapshot
+                                            <SectionInfo text="High-level financial baseline for opening the discussion and validating current position." />
                                         </h4>
                                         <ul className="space-y-2 text-sm">
                                             <li className="flex justify-between"><span className="text-slate-500">Net Worth</span><span className="text-white font-mono">{generatedBrief.financialSnapshot?.netWorth}</span></li>
@@ -575,6 +583,7 @@ ${prompt}
                                     <div className="rounded-xl border border-slate-700 bg-slate-900/55 p-6">
                                         <h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3 flex items-center gap-2">
                                             <Target className="w-4 h-4 text-emerald-300" /> Strategic Goals
+                                            <SectionInfo text="Client objectives plus rationale, so meeting decisions stay aligned to long-term priorities." />
                                         </h4>
                                         <div className="space-y-3">
                                             {briefGoals.length ? briefGoals.map((goal, idx) => (
@@ -590,6 +599,7 @@ ${prompt}
                                 <section className="rounded-xl border border-slate-700 bg-slate-900/55 p-6">
                                     <h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3 flex items-center gap-2">
                                         <ShieldAlert className="w-4 h-4 text-amber-300" /> Priority Actions
+                                        <SectionInfo text="Urgent or high-impact actions with timing and reasons to drive immediate follow-through." />
                                     </h4>
                                     <div className="space-y-2">
                                         {briefCritical.length ? briefCritical.map((item, idx) => {
@@ -611,6 +621,7 @@ ${prompt}
                                     <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-6">
                                         <h4 className="text-xs uppercase tracking-wider font-bold text-blue-200 mb-3 flex items-center gap-2">
                                             <Lightbulb className="w-4 h-4" /> Opportunities
+                                            <SectionInfo text="Potential improvements such as tax, allocation, or planning upgrades that can add value." />
                                         </h4>
                                         <div className="space-y-2">
                                             {briefOpportunities.length ? briefOpportunities.map((opp, idx) => (
@@ -625,6 +636,7 @@ ${prompt}
                                     <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-6">
                                         <h4 className="text-xs uppercase tracking-wider font-bold text-red-200 mb-3 flex items-center gap-2">
                                             <AlertTriangle className="w-4 h-4" /> Risks
+                                            <SectionInfo text="Key downside exposures and vulnerabilities that should be addressed in the meeting." />
                                         </h4>
                                         <div className="space-y-2">
                                             {briefRisks.length ? briefRisks.map((risk, idx) => (
@@ -640,6 +652,7 @@ ${prompt}
                                 <section className="rounded-xl border border-slate-700 bg-slate-900/55 p-6">
                                     <h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3 flex items-center gap-2">
                                         <MessageSquare className="w-4 h-4 text-purple-300" /> Talking Points
+                                        <SectionInfo text="Suggested advisor phrasing and conversation prompts to structure a confident meeting flow." />
                                     </h4>
                                     <div className="space-y-3">
                                         {briefTalkingPoints.length ? briefTalkingPoints.map((point, idx) => (
@@ -655,6 +668,7 @@ ${prompt}
                                 <section className="rounded-xl border border-slate-700 bg-slate-900/55 p-6">
                                     <h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3 flex items-center gap-2">
                                         <Mail className="w-4 h-4 text-emerald-300" /> Draft Follow-up Email
+                                        <SectionInfo text="Post-meeting summary template to confirm decisions, owners, and next steps with the client." />
                                     </h4>
                                     <div className="bg-slate-950 rounded-lg border border-slate-800 p-4 text-sm text-slate-300 whitespace-pre-wrap leading-7">
                                         {generatedBrief.emailTemplate}
@@ -677,6 +691,7 @@ ${prompt}
                             <div className="flex items-center gap-2">
                                 <MessageSquare className="w-4 h-4 text-emerald-300" />
                                 <h4 className="text-sm font-bold text-slate-100">Finance Chatbot</h4>
+                                <SectionInfo text="Context-aware copilot for client-specific finance questions during prep. Uses selected client + generated brief context." />
                             </div>
                             <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/30">Client Context On</span>
                         </div>

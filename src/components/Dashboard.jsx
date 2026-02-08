@@ -15,6 +15,7 @@ import {
     X,
     Save
 } from 'lucide-react';
+import SectionInfo from './SectionInfo.jsx';
 
 const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
     const [meetingModalOpen, setMeetingModalOpen] = useState(false);
@@ -255,6 +256,7 @@ const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
                         <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                             <AlertTriangle className="text-red-400 w-5 h-5" />
                             Priority Actions Required
+                            <SectionInfo text="Triage list of clients with urgent items so you can prioritize who needs action first." />
                         </h3>
 
                         {urgentClients.length === 0 ? (
@@ -302,7 +304,10 @@ const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
                 <div className="space-y-6">
                     {/* Quick Actions */}
                     <div className="glass-panel p-6 bg-gradient-to-b from-blue-900/20 to-slate-900/50 border-blue-500/10">
-                        <h4 className="text-sm font-bold text-blue-100 uppercase tracking-wider mb-4">Quick Actions</h4>
+                        <h4 className="text-sm font-bold text-blue-100 uppercase tracking-wider mb-4 flex items-center">
+                            Quick Actions
+                            <SectionInfo text="Use this section to jump straight into key workflows like creating clients and generating outputs." />
+                        </h4>
                         <div className="space-y-2">
                             <button
                                 onClick={onAddClient}
@@ -319,7 +324,10 @@ const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
                     {/* Tax Year End Countdown */}
                     <div className="glass-panel p-6 relative overflow-hidden">
                         <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-500 rounded-full blur-3xl opacity-20"></div>
-                        <h3 className="text-lg font-bold text-white mb-2">Tax Year End</h3>
+                        <h3 className="text-lg font-bold text-white mb-2 flex items-center">
+                            Tax Year End
+                            <SectionInfo text="In the UK, the tax year ends on 5 April and starts on 6 April. This section helps track ISA usage and protection readiness before year-end." />
+                        </h3>
                         <p className="text-slate-400 text-sm mb-4">{daysUntilTaxYearEnd} days remaining to utilize allowances.</p>
 
                         <div className="space-y-4">
@@ -355,6 +363,7 @@ const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
                             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                                 <Calendar className="text-blue-400 w-4 h-4" />
                                 Upcoming Reviews
+                                <SectionInfo text="Shows near-term review meetings and lets you schedule/edit them or jump to prep report generation." />
                             </h3>
                             <button
                                 onClick={() => openScheduleModal(null)}

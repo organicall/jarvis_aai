@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 // import { clients } from '../data/clients';
 import { FileText, CheckCircle, Clock, AlertTriangle, Search, FileCheck } from 'lucide-react';
+import SectionInfo from './SectionInfo.jsx';
 
 const Compliance = ({ clients = [] }) => {
     // --- Data Logic ---
@@ -80,6 +81,7 @@ const Compliance = ({ clients = [] }) => {
                     <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                         <Clock className="text-orange-400 w-5 h-5" />
                         Pending Documentation
+                        <SectionInfo text="Operational queue of outstanding paperwork, overdue evidence, and draft items that still need completion." />
                     </h3>
                     <div className="space-y-3">
                         {pendingDocuments.map((doc, idx) => (
@@ -109,6 +111,7 @@ const Compliance = ({ clients = [] }) => {
                     <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                         <FileCheck className="text-emerald-400 w-5 h-5" />
                         Recent Suitability Reports
+                        <SectionInfo text="Timeline of recent suitability outputs used as a quick audit trail and recommendation history reference." />
                     </h3>
                     <div className="relative border-l border-slate-700 ml-3 space-y-6">
                         {recentSuitabilityReports.map((report, idx) => (
@@ -138,7 +141,10 @@ const Compliance = ({ clients = [] }) => {
                         <CheckCircle className="w-8 h-8 text-blue-400" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-white mb-1">Consumer Duty: Detailed Evidence</h3>
+                        <h3 className="text-lg font-bold text-white mb-1 flex items-center">
+                            Consumer Duty: Detailed Evidence
+                            <SectionInfo text="Consumer Duty evidence helps show that advice quality, value, and outcomes are monitored consistently across active clients." />
+                        </h3>
                         <p className="text-slate-400 text-sm mb-4">
                             Automated analysis confirms <span className="text-white font-bold">100%</span> of active clients have received a fair value assessment in the last 12 months.
                         </p>

@@ -2,11 +2,16 @@ import React, { useMemo } from 'react';
 // import { clients } from '../data/clients';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { TrendingUp, DollarSign, Activity, AlertCircle } from 'lucide-react';
+import SectionInfo from './SectionInfo.jsx';
 
 const Investments = ({ clients = [] }) => {
+    const toNumber = (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : 0;
+    };
+
     // --- Data Aggregation ---
     const assetAllocationData = useMemo(() => {
-        let totalAssets = 0;
         const allocation = {
             'Pensions': 0,
             'ISAs': 0,
@@ -18,16 +23,14 @@ const Investments = ({ clients = [] }) => {
         if (clients.length === 0) return []; // Handle empty state
 
         clients.forEach(client => {
-            const a = client.financials?.assets || {};
+            const a = client.financials?.assets || client.assets || {};
             // Simplified aggregation - ensure values are numbers
-            allocation['Pensions'] += Number(a.pensions || 0);
-            // Check nested profile pensions if they exist in the new structure (likely not needed if we map correctly in App.jsx but good to be safe)
-            // allocation['Pensions'] += (client.profile?.maureen?.pension || 0); 
+            allocation['Pensions'] += toNumber(a.pensions);
 
-            allocation['ISAs'] += Number(a.isa || 0) + Number(a.juniorIsa || 0) + Number(a.inheritedIsa || 0);
-            allocation['Property'] += Number(a.propertyMain || 0) + Number(a.propertyHoliday || 0);
-            allocation['Cash & Savings'] += Number(a.savings || 0) + Number(a.emergency || 0) + Number(a.companyReserves || 0);
-            allocation['Other (Bonds/Wine/etc)'] += Number(a.premiumBonds || 0) + Number(a.shareOptions || 0) + Number(a.wine || 0) + Number(a.investments || 0);
+            allocation['ISAs'] += toNumber(a.isa) + toNumber(a.juniorIsa) + toNumber(a.inheritedIsa);
+            allocation['Property'] += toNumber(a.propertyMain) + toNumber(a.propertyHoliday);
+            allocation['Cash & Savings'] += toNumber(a.savings) + toNumber(a.emergency) + toNumber(a.companyReserves);
+            allocation['Other (Bonds/Wine/etc)'] += toNumber(a.premiumBonds) + toNumber(a.shareOptions) + toNumber(a.wine) + toNumber(a.investments);
         });
 
         return Object.keys(allocation).map(key => ({
@@ -36,9 +39,23 @@ const Investments = ({ clients = [] }) => {
         })).sort((a, b) => b.value - a.value);
     }, [clients]);
 
+    const defaultPortfolioSplit = useMemo(() => ([
+        { name: 'Equities', value: 40 },
+        { name: 'Fixed Income', value: 30 },
+        { name: 'Property', value: 20 },
+        { name: 'Cash', value: 10 }
+    ]), []);
+
+    const hasRealAllocationData = useMemo(
+        () => assetAllocationData.some((item) => item.value > 0),
+        [assetAllocationData]
+    );
+
+    const chartData = hasRealAllocationData ? assetAllocationData : defaultPortfolioSplit;
+
     const topClientsByAUM = useMemo(() => {
         return [...clients]
-            .sort((a, b) => (b.financials?.netWorth || 0) - (a.financials?.netWorth || 0))
+            .sort((a, b) => ((b.financials?.netWorth || b.net_worth || 0) - (a.financials?.netWorth || a.net_worth || 0)))
             .slice(0, 5);
     }, [clients]);
 
@@ -50,9 +67,11 @@ const Investments = ({ clients = [] }) => {
             return (
                 <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl">
                     <p className="text-slate-200 font-medium">{payload[0].name}</p>
-                    <p className="text-blue-400">
-                        £{(payload[0].value / 1000000).toFixed(2)}M
-                    </p>
+                    {hasRealAllocationData ? (
+                        <p className="text-blue-400">£{(payload[0].value / 1000000).toFixed(2)}M</p>
+                    ) : (
+                        <p className="text-blue-400">{payload[0].value}%</p>
+                    )}
                 </div>
             );
         }
@@ -70,7 +89,7 @@ const Investments = ({ clients = [] }) => {
                     </div>
                     <p className="text-slate-400 text-sm font-medium mb-1">Total Assets Under Management</p>
                     <h3 className="text-3xl font-bold text-white mb-2">
-                        £{((clients.reduce((acc, c) => acc + (c.financials?.netWorth || 0), 0)) / 1000000).toFixed(2)}M
+                        £{((clients.reduce((acc, c) => acc + (c.financials?.netWorth || c.net_worth || 0), 0)) / 1000000).toFixed(2)}M
                     </h3>
                     <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium">
                         <TrendingUp className="w-3 h-3" />
@@ -93,7 +112,7 @@ const Investments = ({ clients = [] }) => {
                     </div>
                     <p className="text-slate-400 text-sm font-medium mb-1">Cash Drag</p>
                     <h3 className="text-3xl font-bold text-white mb-2">
-                        £{(clients.reduce((acc, c) => acc + (c.financials?.assets?.savings || 0), 0) / 1000).toFixed(0)}k
+                        £{(clients.reduce((acc, c) => acc + (c.financials?.assets?.savings || c.assets?.savings || 0), 0) / 1000).toFixed(0)}k
                     </h3>
                     <p className="text-orange-400 text-xs">High cash holdings identified (~4.5%)</p>
                 </div>
@@ -104,9 +123,12 @@ const Investments = ({ clients = [] }) => {
                 {/* Asset Allocation Chart */}
                 <div className="glass-panel p-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-bold text-white">Aggregated Asset Allocation</h3>
+                        <h3 className="text-lg font-bold text-white flex items-center">
+                            Aggregated Asset Allocation
+                            <SectionInfo text="Portfolio mix across all loaded clients. If live allocation fields are empty, a demo split is shown so the chart still helps explain allocation concepts." />
+                        </h3>
                         <button className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full text-slate-300 transition-colors">
-                            View by Client
+                            {hasRealAllocationData ? 'View by Client' : 'Demo Split'}
                         </button>
                     </div>
 
@@ -114,7 +136,7 @@ const Investments = ({ clients = [] }) => {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={assetAllocationData}
+                                    data={chartData}
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={60}
@@ -123,11 +145,11 @@ const Investments = ({ clients = [] }) => {
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
-                                    {assetAllocationData.map((entry, index) => (
+                                    {chartData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip content={<CustomTooltip />} />
+                                <Tooltip content={<CustomTooltip />} isAnimationActive={false} animationDuration={0} />
                                 <Legend
                                     verticalAlign="middle"
                                     align="right"
@@ -142,7 +164,10 @@ const Investments = ({ clients = [] }) => {
 
                 {/* Top Clients Table */}
                 <div className="glass-panel p-6">
-                    <h3 className="text-lg font-bold text-white mb-6">Top Clients by Net Worth</h3>
+                    <h3 className="text-lg font-bold text-white mb-6 flex items-center">
+                        Top Clients by Net Worth
+                        <SectionInfo text="Ranks highest-net-worth clients to highlight concentration, service priority, and planning impact." />
+                    </h3>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-slate-400">
                             <thead>
@@ -160,10 +185,10 @@ const Investments = ({ clients = [] }) => {
                                             <div className="text-[10px] text-slate-500">{client.profile?.location || 'Unknown Location'}</div>
                                         </td>
                                         <td className="py-3 text-right font-mono text-emerald-400">
-                                            £{((client.financials?.netWorth || 0) / 1000000).toFixed(2)}M
+                                            £{((client.financials?.netWorth || client.net_worth || 0) / 1000000).toFixed(2)}M
                                         </td>
                                         <td className="py-3 text-right font-mono text-slate-300">
-                                            £{((client.financials?.assets?.savings || 0) / 1000).toFixed(0)}k
+                                            £{((client.financials?.assets?.savings || client.assets?.savings || 0) / 1000).toFixed(0)}k
                                         </td>
                                     </tr>
                                 ))}
@@ -176,7 +201,10 @@ const Investments = ({ clients = [] }) => {
 
             {/* Model Portfolio Performance (Static Mock) */}
             <div className="glass-panel p-6">
-                <h3 className="text-lg font-bold text-white mb-6">Model Portfolios vs Benchmarks</h3>
+                <h3 className="text-lg font-bold text-white mb-6 flex items-center">
+                    Model Portfolios vs Benchmarks
+                    <SectionInfo text="Compares model strategy returns against benchmarks to support suitability and performance conversations." />
+                </h3>
                 <div style={{ height: 250, width: '100%' }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
