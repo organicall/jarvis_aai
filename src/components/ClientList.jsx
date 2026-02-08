@@ -632,7 +632,7 @@ const ClientList = ({ selectedClientId, addClientTrigger }) => {
                                             </h3>
                                             <p className="text-sm text-slate-400 mt-1">Upload a .docx file and let AI extract all client data automatically</p>
                                         </div>
-                                        <label className="px-6 py-3 rounded-lg bg-white text-blue-600 font-semibold hover:bg-slate-200 transition-colors cursor-pointer flex items-center gap-2">
+                                        <label className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-500 transition-colors cursor-pointer flex items-center gap-2">
                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                             </svg>
