@@ -139,6 +139,13 @@ You'll also need accounts for:
 - Groq API (free tier available at console.groq.com)
 - Supabase (free tier at supabase.com)
 
+## Complete A-Z Usage Guide
+
+For the full, detailed setup and usage walkthrough, use this direct link:  
+**[Open the Complete A-Z Guide](./docs/COMPLETE_GUIDE.md)**
+
+This keeps the main README concise while still giving users one-click access to the full guide.
+
 ## Local Setup
 
 ### 1. Clone the Repository
@@ -204,21 +211,8 @@ npm run dev
 
 ## Using the Application
 
-### Adding a Client
-
-Click the "Add Client" button and upload a Word document containing client information. The AI automatically extracts:
-- Client identification details
-- Total AUM and portfolio breakdown
-- Investment and protection details
-- Critical actions and review dates
-
-### Preparing for Meetings
-
-Navigate to the Meeting Prep tab, select a client, and click "Generate Brief". The system creates a comprehensive meeting analysis including client overview, discussion points, risk assessment, and recommended actions.
-
-### Managing Clients
-
-Use the search bar to find clients by name or ID. Apply filters for status (Active/Inactive) or urgency (Critical Actions). Click any client to view or edit their details, and use the scheduler to set review dates and add notes.
+Use the complete end-to-end instructions here:  
+**[Detailed Usage (A-Z)](./docs/COMPLETE_GUIDE.md#using-the-application-a-z)**
 
 ## Project Structure
 

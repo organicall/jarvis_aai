@@ -1,36 +1,61 @@
 import React, { useMemo } from 'react';
-import { clients } from '../data/clients';
+// import { clients } from '../data/clients';
 import { Shield, ShieldAlert, Heart, Calendar, CheckCircle } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine } from 'recharts';
 
-const Protection = () => {
+const Protection = ({ clients = [] }) => {
     // --- Analysis Logic ---
     const criticalGaps = useMemo(() => {
         return clients.flatMap(client => {
             const gaps = [];
-            const risks = client.risks || [];
+            const risks = client.risks || []; // Ensure risks is an array
 
-            risks.forEach(risk => {
-                if (risk.text.toLowerCase().includes('protection') || risk.text.toLowerCase().includes('cover')) {
-                    gaps.push({
-                        client: client.name,
-                        risk: risk.text,
-                        level: risk.type
-                    });
+            if (Array.isArray(risks)) {
+                risks.forEach(risk => {
+                    const text = (typeof risk === 'string' ? risk : risk.text || '').toLowerCase();
+                    if (text.includes('protection') || text.includes('cover')) {
+                        gaps.push({
+                            client: client.name,
+                            risk: typeof risk === 'string' ? risk : (risk.text || 'Unknown Risk'),
+                            level: typeof risk === 'object' ? (risk.type || 'medium') : 'medium'
+                        });
+                    }
+                });
+
+                // Implicit logic from brief: Checking strictly for "No Income Protection"
+                if (risks.some(r => {
+                    const t = typeof r === 'string' ? r : r.text || '';
+                    return t.includes('NO Income Protection');
+                })) {
+                    // Already captured above usually, but good to be explicit if needed
                 }
-            });
-
-            // Implicit logic from brief: Checking strictly for "No Income Protection"
-            if (client.risks.some(r => r.text.includes('NO Income Protection'))) {
-                // Already captured above usually, but good to be explicit if needed
             }
 
             return gaps;
         }).sort((a, b) => (a.level === 'critical' ? -1 : 1));
-    }, []);
+    }, [clients]);
 
     const expiringPolicies = useMemo(() => {
-        // Mocking some policy data structure extracted from the description text
+        // Try to extract policies from client data if available
+        const realPolicies = clients.flatMap(client => {
+            const protectionData = client.protection || {};
+            const policies = protectionData.policies || protectionData.items || [];
+            if (Array.isArray(policies)) {
+                return policies.map(p => ({
+                    client: client.name,
+                    type: p.type || 'Unknown Policy',
+                    amount: p.amount || p.sum_assured || '£0',
+                    expiry: p.expiry_date || p.expiry_year || 'Unknown'
+                }));
+            }
+            return [];
+        });
+
+        if (realPolicies.length > 0) {
+            return realPolicies.sort((a, b) => parseInt(a.expiry || '9999') - parseInt(b.expiry || '9999'));
+        }
+
+        // Fallback to mock data if no real data found (to preserve UI state for demo)
         const policies = [
             { client: "David Chen", type: "Life + CI", amount: "£750k", expiry: "2035" },
             { client: "Sarah Chen", type: "Life", amount: "£400k", expiry: "2038" },
@@ -45,7 +70,7 @@ const Protection = () => {
         ].sort((a, b) => parseInt(a.expiry) - parseInt(b.expiry));
 
         return policies;
-    }, []);
+    }, [clients]);
 
     return (
         <div className="space-y-6 animate-fade-in">

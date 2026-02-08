@@ -35,3 +35,11 @@ export async function updateClient(clientId, updates) {
   if (error) throw error;
   return data;
 }
+
+export async function fetchAllClientData() {
+  const { data, error } = await supabase
+    .from('client_data')
+    .select('*');
+  if (error) throw error;
+  return data ?? [];
+}

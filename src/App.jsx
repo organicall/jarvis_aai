@@ -6,7 +6,8 @@ import Investments from './components/Investments.jsx';
 import Protection from './components/Protection.jsx';
 import Compliance from './components/Compliance.jsx';
 import MeetingPrep from './components/MeetingPrep.jsx';
-import { fetchClients } from './lib/db.js';
+import { fetchClients, fetchAllClientData } from './lib/db.js';
+import { clients as mockClients } from './data/clients.js';
 import { LayoutDashboard, Users, PieChart, ShieldAlert, FileText, Settings, Sparkles, BrainCircuit } from 'lucide-react';
 
 const TAB_LABELS = {
@@ -57,10 +58,62 @@ const App = () => {
   useEffect(() => {
     const loadClients = async () => {
       try {
-        const data = await fetchClients();
-        setClients(data);
+        const [clientsData, allClientData] = await Promise.all([
+          fetchClients(),
+          fetchAllClientData()
+        ]);
+
+        if (!clientsData || clientsData.length === 0) {
+          console.warn('No clients found in DB, using mock data');
+          setClients(mockClients);
+          return;
+        }
+
+        // Merge summary data (clients table) with detailed sections (client_data table)
+        const enrichedClients = clientsData.map(client => {
+          const clientSections = allClientData.filter(d => d.client_id === client.client_id);
+
+          // Helper to get section data safely
+          const getSection = (type) => {
+            const section = clientSections.find(s => s.section_type === type);
+            // Ensure we parse JSON if it's a string (backwards compatibility)
+            if (section && typeof section.data === 'string') {
+              try {
+                return JSON.parse(section.data);
+              } catch (e) {
+                return section.data; // Return as string if parse fails (e.g. text blocks) or let components handle it
+              }
+            }
+            return section ? section.data : null;
+          };
+
+          return {
+            id: client.client_id,
+            name: client.client_name,
+            lastReview: client.last_updated,
+            nextReview: client.next_review_date,
+            status: client.status,
+            profile: getSection('personal_details') || {},
+            financials: {
+              combinedIncome: client.combined_income,
+              netWorth: client.net_worth,
+              assets: getSection('assets') || {},
+              liabilities: getSection('liabilities') || {},
+              isaAllowance: getSection('isa_allowance') || {}
+            },
+            risks: getSection('risks') || [],
+            opportunities: getSection('opportunities') || [],
+            protection: getSection('protection') || {},
+            rawSections: clientSections
+          };
+        });
+
+        // If data enrichment failed to produce valid assets/numbers (e.g. all empty), fallback to mock might be preferred?
+        // For now, let's trust the DB data if it exists.
+        setClients(enrichedClients);
       } catch (error) {
-        console.error('Failed to fetch clients:', error);
+        console.error('Failed to fetch clients, falling back to mock:', error);
+        setClients(mockClients);
       }
     };
     loadClients();
@@ -69,7 +122,7 @@ const App = () => {
   // Filter clients based on search query
   const filteredClients = searchQuery.trim()
     ? clients.filter(client =>
-      client.client_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      client.name?.toLowerCase().includes(searchQuery.toLowerCase())
     ).slice(0, 5)  // Show max 5 results
     : [];
 
@@ -82,7 +135,7 @@ const App = () => {
 
   // Handle client selection
   const handleSelectClient = (client) => {
-    setSelectedClientId(client.client_id);
+    setSelectedClientId(client.id);
     setActiveTab('clients');
     setSearchQuery('');
     setShowDropdown(false);
@@ -267,10 +320,10 @@ const App = () => {
                     onMouseEnter={() => setSelectedIndex(index)}
                   >
                     <div style={{ color: '#fff', fontWeight: '500', marginBottom: '4px' }}>
-                      {client.client_name}
+                      {client.name}
                     </div>
                     <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
-                      {client.client_id} • Portfolio: £{(client.net_worth / 1000000).toFixed(2)}M
+                      {client.id} • Portfolio: £{((client.financials?.netWorth || 0) / 1000000).toFixed(2)}M
                     </div>
                   </div>
                 ))}
@@ -304,9 +357,9 @@ const App = () => {
           )}
           {activeTab === 'clients' && <ClientList selectedClientId={selectedClientId} addClientTrigger={addClientTrigger} />}
           {activeTab === 'meeting-prep' && <MeetingPrep initialClientId={selectedClientId} />}
-          {activeTab === 'investments' && <Investments />}
-          {activeTab === 'protection' && <Protection />}
-          {activeTab === 'compliance' && <Compliance />}
+          {activeTab === 'investments' && <Investments clients={clients} />}
+          {activeTab === 'protection' && <Protection clients={clients} />}
+          {activeTab === 'compliance' && <Compliance clients={clients} />}
 
           {activeTab === 'settings' && (
             <div className="panel">

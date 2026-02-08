@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
-import { clients } from '../data/clients';
+// import { clients } from '../data/clients';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { TrendingUp, DollarSign, Activity, AlertCircle } from 'lucide-react';
 
-const Investments = () => {
+const Investments = ({ clients = [] }) => {
     // --- Data Aggregation ---
     const assetAllocationData = useMemo(() => {
         let totalAssets = 0;
@@ -15,26 +15,32 @@ const Investments = () => {
             'Other (Bonds/Wine/etc)': 0
         };
 
+        if (clients.length === 0) return []; // Handle empty state
+
         clients.forEach(client => {
-            const a = client.financials.assets;
-            allocation['Pensions'] += (a.pensions || 0) + (client.profile.maureen?.pension || 0); // Simplified
-            allocation['ISAs'] += (a.isa || 0) + (a.juniorIsa || 0) + (a.inheritedIsa || 0);
-            allocation['Property'] += (a.propertyMain || 0) + (a.propertyHoliday || 0);
-            allocation['Cash & Savings'] += (a.savings || 0) + (a.emergency || 0) + (a.companyReserves || 0);
-            allocation['Other (Bonds/Wine/etc)'] += (a.premiumBonds || 0) + (a.shareOptions || 0) + (a.wine || 0) + (a.investments || 0);
+            const a = client.financials?.assets || {};
+            // Simplified aggregation - ensure values are numbers
+            allocation['Pensions'] += Number(a.pensions || 0);
+            // Check nested profile pensions if they exist in the new structure (likely not needed if we map correctly in App.jsx but good to be safe)
+            // allocation['Pensions'] += (client.profile?.maureen?.pension || 0); 
+
+            allocation['ISAs'] += Number(a.isa || 0) + Number(a.juniorIsa || 0) + Number(a.inheritedIsa || 0);
+            allocation['Property'] += Number(a.propertyMain || 0) + Number(a.propertyHoliday || 0);
+            allocation['Cash & Savings'] += Number(a.savings || 0) + Number(a.emergency || 0) + Number(a.companyReserves || 0);
+            allocation['Other (Bonds/Wine/etc)'] += Number(a.premiumBonds || 0) + Number(a.shareOptions || 0) + Number(a.wine || 0) + Number(a.investments || 0);
         });
 
         return Object.keys(allocation).map(key => ({
             name: key,
             value: allocation[key]
         })).sort((a, b) => b.value - a.value);
-    }, []);
+    }, [clients]);
 
     const topClientsByAUM = useMemo(() => {
         return [...clients]
-            .sort((a, b) => b.financials.netWorth - a.financials.netWorth)
+            .sort((a, b) => (b.financials?.netWorth || 0) - (a.financials?.netWorth || 0))
             .slice(0, 5);
-    }, []);
+    }, [clients]);
 
     // Colors for charts
     const COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
@@ -64,7 +70,7 @@ const Investments = () => {
                     </div>
                     <p className="text-slate-400 text-sm font-medium mb-1">Total Assets Under Management</p>
                     <h3 className="text-3xl font-bold text-white mb-2">
-                        £{(clients.reduce((acc, c) => acc + c.financials.netWorth, 0) / 1000000).toFixed(2)}M
+                        £{((clients.reduce((acc, c) => acc + (c.financials?.netWorth || 0), 0)) / 1000000).toFixed(2)}M
                     </h3>
                     <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium">
                         <TrendingUp className="w-3 h-3" />
@@ -87,7 +93,7 @@ const Investments = () => {
                     </div>
                     <p className="text-slate-400 text-sm font-medium mb-1">Cash Drag</p>
                     <h3 className="text-3xl font-bold text-white mb-2">
-                        £{(clients.reduce((acc, c) => acc + (c.financials.assets.savings || 0), 0) / 1000).toFixed(0)}k
+                        £{(clients.reduce((acc, c) => acc + (c.financials?.assets?.savings || 0), 0) / 1000).toFixed(0)}k
                     </h3>
                     <p className="text-orange-400 text-xs">High cash holdings identified (~4.5%)</p>
                 </div>
@@ -151,13 +157,13 @@ const Investments = () => {
                                     <tr key={client.id} className="hover:bg-slate-800/30 transition-colors">
                                         <td className="py-3 pl-2 font-medium text-slate-200">
                                             <div>{client.name}</div>
-                                            <div className="text-[10px] text-slate-500">{client.profile.location}</div>
+                                            <div className="text-[10px] text-slate-500">{client.profile?.location || 'Unknown Location'}</div>
                                         </td>
                                         <td className="py-3 text-right font-mono text-emerald-400">
-                                            £{(client.financials.netWorth / 1000000).toFixed(2)}M
+                                            £{((client.financials?.netWorth || 0) / 1000000).toFixed(2)}M
                                         </td>
                                         <td className="py-3 text-right font-mono text-slate-300">
-                                            £{((client.financials.assets.savings || 0) / 1000).toFixed(0)}k
+                                            £{((client.financials?.assets?.savings || 0) / 1000).toFixed(0)}k
                                         </td>
                                     </tr>
                                 ))}

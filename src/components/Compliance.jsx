@@ -1,33 +1,41 @@
 import React, { useMemo } from 'react';
-import { clients } from '../data/clients';
+// import { clients } from '../data/clients';
 import { FileText, CheckCircle, Clock, AlertTriangle, Search, FileCheck } from 'lucide-react';
 
-const Compliance = () => {
+const Compliance = ({ clients = [] }) => {
     // --- Data Logic ---
     const pendingDocuments = useMemo(() => {
         // Extract items marked as "pending" or "re-quote" from status/risks
         const items = [];
         clients.forEach(c => {
+            const risks = c.risks || []; // Ensure risks is array
             // Check risks for "pending" keywords
-            c.risks.forEach(r => {
-                if (r.text.toLowerCase().includes('pending') || r.text.toLowerCase().includes('quote')) {
-                    items.push({
-                        client: c.name,
-                        id: c.id,
-                        docName: r.text, // Simplified for mock
-                        status: 'Pending',
-                        date: 'Jan 2026', // Mock date
-                        type: 'Evidence'
-                    });
-                }
-            });
+            if (Array.isArray(risks)) {
+                risks.forEach(r => {
+                    const rText = typeof r === 'string' ? r : (r.text || '');
+                    if (rText?.toLowerCase().includes('pending') || rText?.toLowerCase().includes('quote')) {
+                        items.push({
+                            client: c.name,
+                            id: c.id,
+                            docName: rText, // Simplified for mock
+                            status: 'Pending',
+                            date: 'Jan 2026', // Mock date, normally derived from c.updatedAt
+                            type: 'Evidence'
+                        });
+                    }
+                });
+            }
 
             // Check implicit "opportunities" that need paperwork
-            c.opportunities.forEach(o => {
-                if (o.text.includes('Transfer') || o.text.includes('ISA')) {
-                    // items.push({...}) - keeping it simple for this view
-                }
-            });
+            const opportunities = c.opportunities || [];
+            if (Array.isArray(opportunities)) {
+                opportunities.forEach(o => {
+                    const oText = typeof o === 'string' ? o : (o.text || '');
+                    if (oText?.includes('Transfer') || oText?.includes('ISA')) {
+                        // items.push({...}) - keeping it simple for this view
+                    }
+                });
+            }
         });
 
         // Add specific hardcoded examples from the brief for richness
@@ -39,7 +47,7 @@ const Compliance = () => {
         );
 
         return items;
-    }, []);
+    }, [clients]);
 
     const recentSuitabilityReports = [
         { client: "Emma Thompson", date: "Nov 2025", reason: "Pension Contribution Increase (Tax)", status: "Sent" },
@@ -86,8 +94,8 @@ const Compliance = () => {
                                     </div>
                                 </div>
                                 <span className={`text-xs px-2 py-1 rounded border ${doc.status === 'Overdue'
-                                        ? 'border-red-500/30 text-red-400 bg-red-500/10'
-                                        : 'border-orange-500/30 text-orange-400 bg-orange-500/10'
+                                    ? 'border-red-500/30 text-red-400 bg-red-500/10'
+                                    : 'border-orange-500/30 text-orange-400 bg-orange-500/10'
                                     }`}>
                                     {doc.status}
                                 </span>
