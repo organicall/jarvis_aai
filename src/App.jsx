@@ -9,6 +9,7 @@ import MeetingPrep from './components/MeetingPrep.jsx';
 import { fetchClients, fetchAllClientData } from './lib/db.js';
 import { clients as mockClients } from './data/clients.js';
 import { LayoutDashboard, Users, PieChart, ShieldAlert, FileText, Settings, Sparkles, BrainCircuit } from 'lucide-react';
+import SettingsComponent from './components/Settings.jsx';
 
 const TAB_LABELS = {
   dashboard: 'Command Center',
@@ -361,14 +362,7 @@ const App = () => {
           {activeTab === 'protection' && <Protection clients={clients} />}
           {activeTab === 'compliance' && <Compliance clients={clients} />}
 
-          {activeTab === 'settings' && (
-            <div className="panel">
-              <h2>Settings</h2>
-              <p>
-                Configure API keys in Meeting Prep. Workflow configuration and automation settings will live here.
-              </p>
-            </div>
-          )}
+          {activeTab === 'settings' && <SettingsComponent />}
         </div>
       </main>
     </div>
