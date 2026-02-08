@@ -140,13 +140,6 @@ You'll also need accounts for:
 - Groq API (free tier available at console.groq.com)
 - Supabase (free tier at supabase.com)
 
-## Complete A-Z Usage Guide
-
-For the full, detailed setup and usage walkthrough, use this direct link:  
-**[Open the Complete A-Z Guide](./docs/COMPLETE_GUIDE.md)**
-
-This keeps the main README concise while still giving users one-click access to the full guide.
-
 ## Local Setup
 
 ### 1. Clone the Repository
@@ -209,11 +202,6 @@ npm run server
 # Terminal 2
 npm run dev
 ```
-
-## Using the Application
-
-Use the complete end-to-end instructions here:  
-**[Detailed Usage (A-Z)](./docs/COMPLETE_GUIDE.md#using-the-application-a-z)**
 
 ## Project Structure
 
