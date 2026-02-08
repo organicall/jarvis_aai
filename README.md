@@ -2,6 +2,7 @@
 
 **Live Demo:** https://jarvis-aai.vercel.app/  
 **Video Demo:** https://youtu.be/ItM7L4wCHXE
+**Complete Guide:** [A-Z Usage Guide](./docs/COMPLETE_GUIDE.md)
 
 ## Problem Statement
 
