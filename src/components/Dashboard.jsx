@@ -315,7 +315,10 @@ const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
                             >
                                 <span>Add New Client</span>
                             </button>
-                            <button className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 p-3 rounded-lg text-sm font-medium transition-all border border-slate-700">
+                            <button
+                                onClick={() => onGenerateReport && onGenerateReport()}
+                                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 p-3 rounded-lg text-sm font-medium transition-all border border-slate-700"
+                            >
                                 Generate Reports
                             </button>
                         </div>
@@ -359,20 +362,22 @@ const Dashboard = ({ onNavigateToClient, onAddClient, onGenerateReport }) => {
 
                     {/* Upcoming Reviews & Scheduling */}
                     <div className="glass-panel p-6">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="mb-4">
                             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                                 <Calendar className="text-blue-400 w-4 h-4" />
                                 Upcoming Reviews
                                 <SectionInfo text="Shows near-term review meetings and lets you schedule/edit them or jump to prep report generation." />
                             </h3>
-                            <button
-                                onClick={() => openScheduleModal(null)}
-                                className="p-1 hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-white"
-                                title="Schedule New Meeting"
-                            >
-                                <Plus className="w-4 h-4" />
-                            </button>
                         </div>
+
+                        <button
+                            onClick={() => openScheduleModal(null)}
+                            className="w-full mb-3 bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                            title="Schedule New Meeting"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Upcoming Review
+                        </button>
 
                         {upcomingReviewClients.length === 0 ? (
                             <div className="text-center py-4 text-slate-500 text-xs">

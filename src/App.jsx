@@ -202,8 +202,10 @@ const App = () => {
     setAddClientTrigger(Date.now());
   };
 
-  const handleGenerateReport = (clientId) => {
-    setSelectedClientId(clientId);
+  const handleGenerateReport = (clientId = null) => {
+    if (clientId) {
+      setSelectedClientId(clientId);
+    }
     setActiveTab('meeting-prep');
   };
 
